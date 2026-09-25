@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>PHEBIANA BILINGUAL INSTITUTE (PBT) | English & French Mastery</title>
+  <meta name="description" content="Empowering you to speak the world's languages. Structured English and French courses with expert tutors. Free placement test." />
+  <meta name="theme-color" content="#0f766e" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f766e'/%3E%3Ctext x='32' y='42' font-size='22' font-family='system-ui,sans-serif' font-weight='700' text-anchor='middle' fill='%23f59e0b'%3EPBT%3C/text%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#f0fdfa', 100:'#ccfbf1', 200:'#99f6e4', 300:'#5eead4', 400:'#2dd4bf', 500:'#14b8a6', 600:'#0d9488', 700:'#0f766e', 800:'#115e59', 900:'#134e4a', 950:'#042f2e' },
+            accent: { DEFAULT:'#f59e0b', light:'#fbbf24', dark:'#d97706' }
+          },
+          fontFamily: { display: ['Georgia','serif'], sans: ['system-ui','-apple-system','Segoe UI','Roboto','sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    [hidden]{display:none!important}
+    html{scroll-behavior:smooth}
+    .fade-in{animation:fadeIn .4s ease-out}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    .card-hover{transition:transform .2s,box-shadow .2s}
+    .card-hover:hover{transform:translateY(-4px);box-shadow:0 12px 24px -8px rgba(15,118,110,.25)}
+    .toast{animation:toastIn .3s ease-out}
+    @keyframes toastIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased dark:bg-slate-900 dark:text-slate-100 transition-colors">
+  <div id="toastHost" class="fixed bottom-4 right-4 z-[100] space-y-2 max-w-sm"></div>
+
+  <header class="fixed top-0 inset-x-0 z-50 bg-brand-950/95 backdrop-blur border-b border-brand-800">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2 text-white font-bold text-lg">
+        <span class="w-9 h-9 rounded-lg bg-accent flex items-center justify-center text-brand-950 text-sm font-black">PBT</span>
+        <span class="hidden sm:inline">PHEBIANA BILINGUAL INSTITUTE</span>
+      </a>
+      <nav class="hidden md:flex items-center gap-6 text-sm text-brand-100">
+        <a href="#courses" class="hover:text-accent transition" data-i18n="nav.courses">Courses</a>
+        <a href="#how" class="hover:text-accent transition" data-i18n="nav.how">How it works</a>
+        <a href="#about" class="hover:text-accent transition" data-i18n="nav.about">About</a>
+        <a href="placement.html" class="hover:text-accent transition" data-i18n="nav.placement">Placement Test</a>
+      </nav>
+      <div class="flex items-center gap-2">
+        <button type="button" id="langToggle" class="text-xs text-brand-200 hover:text-white px-2 py-1 rounded border border-brand-700" title="Language">EN</button>
+        <button type="button" id="themeToggle" class="text-brand-200 hover:text-white p-1.5 rounded" title="Toggle theme" aria-label="Toggle dark mode">
+          <svg id="iconSun" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          <svg id="iconMoon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+        <div class="flex items-center gap-2" id="navAuth">
+          <a href="login.html" class="text-sm text-brand-100 hover:text-white px-3 py-1.5" data-i18n="nav.login">Log in</a>
+          <a href="register.html" class="text-sm bg-accent hover:bg-accent-dark text-brand-950 font-semibold px-4 py-2 rounded-lg transition" data-i18n="nav.start">Get started</a>
+        </div>
+        <button type="button" id="mobileMenuBtn" class="md:hidden text-white p-2" aria-label="Menu">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="mobileMenu" class="hidden md:hidden border-t border-brand-800 bg-brand-950 px-4 py-3 space-y-2 text-sm text-brand-100">
+      <a href="#courses" class="block py-2">Courses</a>
+      <a href="#how" class="block py-2">How it works</a>
+      <a href="#about" class="block py-2">About</a>
+      <a href="placement.html" class="block py-2">Placement Test</a>
+    </div>
+  </header>
+
+  <section class="pt-28 pb-16 bg-gradient-to-br from-brand-950 via-brand-900 to-brand-800 text-white relative overflow-hidden">
+    <div class="absolute inset-0 opacity-10 pointer-events-none" style="background:radial-gradient(circle at 80% 20%,#2dd4bf 0%,transparent 50%)"></div>
+    <div class="max-w-6xl mx-auto px-4 grid md:grid-cols-2 gap-12 items-center relative">
+      <div class="fade-in">
+        <p class="inline-flex items-center gap-2 text-accent text-sm font-semibold tracking-wide mb-4">
+          <span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+          <span data-i18n="hero.badge">Live classes · Expert tutors · Structured levels</span>
+        </p>
+        <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-5" data-i18n="hero.title">
+          Master English &amp; French with confidence
+        </h1>
+        <p class="text-brand-100 text-lg mb-8 max-w-lg" data-i18n="hero.sub">
+          Empowering you to speak the world's languages. We make English and French mastery simple through structured levels and expert tutors.
+        </p>
+        <div class="flex flex-wrap gap-3">
+          <a href="placement.html" class="bg-accent hover:bg-accent-dark text-brand-950 font-bold px-6 py-3 rounded-xl transition shadow-lg shadow-accent/20" data-i18n="hero.cta1">Free placement test</a>
+          <a href="#courses" class="border border-brand-400/50 hover:bg-brand-800 text-white font-semibold px-6 py-3 rounded-xl transition" data-i18n="hero.cta2">View courses</a>
+        </div>
+        <div class="mt-10 flex flex-wrap gap-6 text-sm text-brand-200">
+          <div><span class="block text-2xl font-bold text-white">4</span> <span data-i18n="hero.s1">Structured levels</span></div>
+          <div><span class="block text-2xl font-bold text-white">2×</span> <span data-i18n="hero.s2">Live classes / week</span></div>
+          <div><span class="block text-2xl font-bold text-white">30</span> <span data-i18n="hero.s3">Days access</span></div>
+        </div>
+      </div>
+      <div class="hidden md:block relative">
+        <div class="bg-brand-800/60 backdrop-blur rounded-2xl p-6 border border-brand-700 shadow-2xl">
+          <p class="text-accent text-xs font-bold uppercase tracking-wider mb-3">Next live session</p>
+          <h3 class="text-xl font-bold mb-1">Intermediate Conversation</h3>
+          <p class="text-brand-200 text-sm mb-4">Google Meet · Live classes weekly</p>
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-brand-600 flex items-center justify-center text-sm font-bold">PBT</div>
+            <div>
+              <p class="font-semibold text-sm">Expert tutors</p>
+              <p class="text-brand-300 text-xs">English &amp; French pathways</p>
+            </div>
+          </div>
+          <div class="h-2 bg-brand-900 rounded-full overflow-hidden">
+            <div class="h-full bg-accent rounded-full" style="width:65%"></div>
+          </div>
+          <p class="text-xs text-brand-300 mt-2">Structured levels · Progress tracked</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="courses" class="py-20 bg-white dark:bg-slate-800">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="font-display text-3xl sm:text-4xl font-bold text-brand-900 dark:text-brand-100 mb-3" data-i18n="courses.title">Choose your path</h2>
+        <p class="text-slate-600 dark:text-slate-300 max-w-xl mx-auto" data-i18n="courses.sub">Structured monthly programmes with live Google Meet classes, lesson materials and progress tracking.</p>
+      </div>
+      <div id="pricingGrid" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+    </div>
+  </section>
+
+  <section id="how" class="py-20 bg-slate-50 dark:bg-slate-900">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="font-display text-3xl sm:text-4xl font-bold text-brand-900 dark:text-brand-100 mb-3" data-i18n="how.title">How it works</h2>
+        <p class="text-slate-600 dark:text-slate-300" data-i18n="how.sub">Four simple steps to fluency</p>
+      </div>
+      <ol class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 list-none">
+        <li><span class="text-5xl font-display font-bold text-brand-200">01</span><h3 class="font-bold text-brand-900 dark:text-brand-100 mt-2 mb-1" data-i18n="how.1t">Take the free test</h3><p class="text-slate-600 dark:text-slate-400 text-sm" data-i18n="how.1d">Placement test to find your exact level.</p></li>
+        <li><span class="text-5xl font-display font-bold text-brand-200">02</span><h3 class="font-bold text-brand-900 dark:text-brand-100 mt-2 mb-1" data-i18n="how.2t">Pick your course</h3><p class="text-slate-600 dark:text-slate-400 text-sm" data-i18n="how.2d">Beginner, Intermediate, Advanced or Kids &amp; Teens.</p></li>
+        <li><span class="text-5xl font-display font-bold text-brand-200">03</span><h3 class="font-bold text-brand-900 dark:text-brand-100 mt-2 mb-1" data-i18n="how.3t">Secure payment</h3><p class="text-slate-600 dark:text-slate-400 text-sm" data-i18n="how.3d">Pay safely. Access unlocks after confirmation.</p></li>
+        <li><span class="text-5xl font-display font-bold text-brand-200">04</span><h3 class="font-bold text-brand-900 dark:text-brand-100 mt-2 mb-1" data-i18n="how.4t">Join live classes</h3><p class="text-slate-600 dark:text-slate-400 text-sm" data-i18n="how.4d">Meet your tutor on Google Meet. Materials in your dashboard.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="about" class="py-20 bg-white dark:bg-slate-800">
+    <div class="max-w-6xl mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+      <div>
+        <h2 class="font-display text-3xl sm:text-4xl font-bold text-brand-900 dark:text-brand-100 mb-6" data-i18n="about.title">About PBT</h2>
+        <div class="space-y-6">
+          <div class="bg-brand-50 dark:bg-brand-950 border-l-4 border-brand-600 p-5 rounded-r-xl">
+            <h3 class="font-bold text-brand-800 dark:text-brand-200 mb-1">Mission</h3>
+            <p class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">"Empowering you to speak the world's languages. We make English and French mastery simple through structured levels and expert tutors."</p>
+          </div>
+          <div class="bg-amber-50 dark:bg-amber-950/40 border-l-4 border-accent p-5 rounded-r-xl">
+            <h3 class="font-bold text-amber-900 dark:text-amber-200 mb-1">Vision</h3>
+            <p class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">"To create a global community of confident bilingual speakers who are ready to seize every opportunity the world offers."</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-brand-950 text-white rounded-2xl p-8">
+        <h3 class="font-display text-2xl font-bold mb-4">Why choose us?</h3>
+        <ul class="space-y-3 text-brand-100 text-sm">
+          <li class="flex gap-3"><span class="text-accent font-bold">✓</span> Small live classes on Google Meet</li>
+          <li class="flex gap-3"><span class="text-accent font-bold">✓</span> Lesson materials in your dashboard</li>
+          <li class="flex gap-3"><span class="text-accent font-bold">✓</span> Expert tutors who track progress</li>
+          <li class="flex gap-3"><span class="text-accent font-bold">✓</span> Free placement test before you enrol</li>
+          <li class="flex gap-3"><span class="text-accent font-bold">✓</span> Flexible monthly access (30 days)</li>
+          <li class="flex gap-3"><span class="text-accent font-bold">✓</span> English &amp; French pathways</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-16 bg-brand-900 text-white text-center">
+    <div class="max-w-2xl mx-auto px-4">
+      <h2 class="font-display text-3xl font-bold mb-3" data-i18n="cta.title">Ready to become bilingual?</h2>
+      <p class="text-brand-200 mb-6" data-i18n="cta.sub">Start with a free placement test — no account required.</p>
+      <a href="placement.html" class="inline-block bg-accent hover:bg-accent-dark text-brand-950 font-bold px-8 py-3 rounded-xl transition">Start free test →</a>
+    </div>
+  </section>
+
+  <footer class="bg-brand-950 text-brand-200 py-12">
+    <div class="max-w-6xl mx-auto px-4 grid sm:grid-cols-3 gap-8 text-sm">
+      <div>
+        <div class="flex items-center gap-2 text-white font-bold mb-3">
+          <span class="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-brand-950 text-xs font-black">PBT</span>
+          PHEBIANA BILINGUAL INSTITUTE
+        </div>
+        <p class="text-brand-300 text-xs leading-relaxed">Empowering you to speak the world's languages.</p>
+      </div>
+      <div>
+        <h4 class="text-white font-semibold mb-3">Quick links</h4>
+        <ul class="space-y-1.5">
+          <li><a href="#courses" class="hover:text-accent">Courses</a></li>
+          <li><a href="placement.html" class="hover:text-accent">Placement test</a></li>
+          <li><a href="login.html" class="hover:text-accent">Log in</a></li>
+          <li><a href="legal.html" class="hover:text-accent">Legal</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-white font-semibold mb-3">Support</h4>
+        <p class="text-brand-300">Email: support@phebiana.edu</p>
+        <p class="text-brand-300 mt-1">Mon–Sat, 8:00 am – 8:00 pm</p>
+      </div>
+    </div>
+    <div class="max-w-6xl mx-auto px-4 mt-8 pt-6 border-t border-brand-800 text-center text-xs text-brand-400">
+      © <span id="year"></span> PHEBIANA BILINGUAL INSTITUTE (PBT). All rights reserved.
+    </div>
+  </footer>
+
+  <script>
+    const PBT_CONFIG = {
+      firebase: {
+        apiKey: "AIzaSyA75IlZR-dIvuVq-IHuesitY6g5JU6_r4c",
+        authDomain: "project1-85c38.firebaseapp.com",
+        projectId: "project1-85c38",
+        storageBucket: "project1-85c38.firebasestorage.app",
+        messagingSenderId: "104769342336",
+        appId: "1:104769342336:web:984da1d8d579cf925acf65",
+        measurementId: "G-QK27C2G0RW"
+      },
+      adminEmails: [
+        "onyekamiracle08@gmail.com",
+        "admin2@example.com",
+        "admin3@example.com",
+        "admin4@example.com"
+      ],
+      courses: [
+        { id: "beginner", title: "Beginner", subtitle: "Conversational Foundations", price: 15000, currency: "XAF", period: "per month", features: ["6 modules / month", "2 live classes per week", "Interactive digital sessions", "Foundational speaking & listening"], popular: false },
+        { id: "intermediate", title: "Intermediate", subtitle: "Conversational Fluency", price: 20000, currency: "XAF", period: "per month", features: ["6 modules / month", "2 live classes per week", "Deeper conversation practice", "Grammar & fluency focus"], popular: true },
+        { id: "advanced", title: "Advanced", subtitle: "Mastery & Nuance", price: 25000, currency: "XAF", period: "per month", features: ["6 modules / month", "2 live classes per week", "Complex discussion & nuance", "Exam & professional readiness"], popular: false },
+        { id: "kids-teens", title: "Kids & Teens", subtitle: "Ages 5–15 · Fun Track", price: 30000, currency: "XAF", period: "per month", features: ["8 specialised lessons / month", "Age-appropriate & playful", "Songs, games & stories", "Builds lifelong love of languages"], popular: false }
+      ]
+    };
+
+    const I18N = {
+      en: {
+        "nav.courses": "Courses", "nav.how": "How it works", "nav.about": "About", "nav.placement": "Placement Test",
+        "nav.login": "Log in", "nav.start": "Get started",
+        "hero.badge": "Live classes · Expert tutors · Structured levels",
+        "hero.title": "Master English & French with confidence",
+        "hero.sub": "Empowering you to speak the world's languages. We make English and French mastery simple through structured levels and expert tutors.",
+        "hero.cta1": "Free placement test", "hero.cta2": "View courses",
+        "hero.s1": "Structured levels", "hero.s2": "Live classes / week", "hero.s3": "Days access",
+        "courses.title": "Choose your path", "courses.sub": "Structured monthly programmes with live Google Meet classes, lesson materials and progress tracking.",
+        "how.title": "How it works", "how.sub": "Four simple steps to fluency",
+        "how.1t": "Take the free test", "how.1d": "Placement test to find your exact level.",
+        "how.2t": "Pick your course", "how.2d": "Beginner, Intermediate, Advanced or Kids & Teens.",
+        "how.3t": "Secure payment", "how.3d": "Pay safely. Access unlocks after confirmation.",
+        "how.4t": "Join live classes", "how.4d": "Meet your tutor on Google Meet. Materials in your dashboard.",
+        "about.title": "About PBT",
+        "cta.title": "Ready to become bilingual?", "cta.sub": "Start with a free placement test — no account required."
+      },
+      fr: {
+        "nav.courses": "Cours", "nav.how": "Comment ça marche", "nav.about": "À propos", "nav.placement": "Test de niveau",
+        "nav.login": "Connexion", "nav.start": "Commencer",
+        "hero.badge": "Cours en direct · Tuteurs experts · Niveaux structurés",
+        "hero.title": "Maîtrisez l'anglais et le français en toute confiance",
+        "hero.sub": "Vous donner le pouvoir de parler les langues du monde. Nous simplifions la maîtrise de l'anglais et du français grâce à des niveaux structurés et des tuteurs experts.",
+        "hero.cta1": "Test de niveau gratuit", "hero.cta2": "Voir les cours",
+        "hero.s1": "Niveaux structurés", "hero.s2": "Cours en direct / semaine", "hero.s3": "Jours d'accès",
+        "courses.title": "Choisissez votre parcours", "courses.sub": "Programmes mensuels structurés avec cours Google Meet en direct, supports de cours et suivi des progrès.",
+        "how.title": "Comment ça marche", "how.sub": "Quatre étapes simples vers la fluidité",
+        "how.1t": "Passez le test gratuit", "how.1d": "Test de placement pour trouver votre niveau exact.",
+        "how.2t": "Choisissez votre cours", "how.2d": "Débutant, Intermédiaire, Avancé ou Enfants & Ados.",
+        "how.3t": "Paiement sécurisé", "how.3d": "Payez en toute sécurité. L'accès s'ouvre après confirmation.",
+        "how.4t": "Rejoignez les cours", "how.4d": "Rencontrez votre tuteur sur Google Meet. Supports dans votre tableau de bord.",
+        "about.title": "À propos de PBT",
+        "cta.title": "Prêt à devenir bilingue ?", "cta.sub": "Commencez par un test de niveau gratuit — aucun compte requis."
+      }
+    };
+
+    function toast(msg, type) {
+      var host = document.getElementById("toastHost");
+      if (!host) return;
+      var el = document.createElement("div");
+      el.className = "toast px-4 py-3 rounded-xl text-sm shadow-lg border " +
+        (type === "error" ? "bg-red-50 text-red-800 border-red-200 dark:bg-red-950 dark:text-red-200" :
+         type === "success" ? "bg-green-50 text-green-800 border-green-200 dark:bg-green-950 dark:text-green-200" :
+         "bg-white text-slate-800 border-slate-200 dark:bg-slate-800 dark:text-slate-100");
+      el.textContent = msg;
+      host.appendChild(el);
+      setTimeout(function () { el.remove(); }, 4000);
+    }
+
+    function formatPrice(n) {
+      return n.toLocaleString("fr-FR") + " XAF";
+    }
+
+    function applyI18n(lang) {
+      var dict = I18N[lang] || I18N.en;
+      document.querySelectorAll("[data-i18n]").forEach(function (el) {
+        var key = el.getAttribute("data-i18n");
+        if (dict[key]) el.textContent = dict[key];
+      });
+      document.documentElement.lang = lang;
+      var btn = document.getElementById("langToggle");
+      if (btn) btn.textContent = lang === "en" ? "FR" : "EN";
+      try { localStorage.setItem("pbt_lang", lang); } catch (e) {}
+    }
+
+    function renderCourses() {
+      var grid = document.getElementById("pricingGrid");
+      if (!grid) return;
+      grid.innerHTML = PBT_CONFIG.courses.map(function (c) {
+        return '<article class="card-hover relative bg-white dark:bg-slate-700 border ' + (c.popular ? "border-accent ring-2 ring-accent/30" : "border-slate-200 dark:border-slate-600") + ' rounded-2xl p-6 flex flex-col">' +
+          (c.popular ? '<span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-brand-950 text-xs font-bold px-3 py-1 rounded-full">Most popular</span>' : "") +
+          '<h3 class="font-bold text-lg text-brand-900 dark:text-brand-100">' + c.title + '</h3>' +
+          '<p class="text-slate-500 dark:text-slate-300 text-sm mb-4">' + c.subtitle + '</p>' +
+          '<p class="text-3xl font-bold text-brand-800 dark:text-brand-200 mb-1">' + formatPrice(c.price) + '</p>' +
+          '<p class="text-xs text-slate-400 mb-5">' + c.period + '</p>' +
+          '<ul class="space-y-2 text-sm text-slate-600 dark:text-slate-300 flex-1 mb-6">' +
+          c.features.map(function (f) { return '<li class="flex gap-2"><span class="text-brand-600">✓</span>' + f + '</li>'; }).join("") +
+          '</ul>' +
+          '<a href="register.html?course=' + c.id + '" class="block text-center ' + (c.popular ? "bg-accent hover:bg-accent-dark text-brand-950" : "bg-brand-700 hover:bg-brand-800 text-white") + ' font-semibold py-2.5 rounded-xl transition">Enrol now</a></article>';
+      }).join("");
+    }
+
+    function initTheme() {
+      var dark = false;
+      try { dark = localStorage.getItem("pbt_theme") === "dark" || (!localStorage.getItem("pbt_theme") && window.matchMedia("(prefers-color-scheme: dark)").matches); } catch (e) {}
+      document.documentElement.classList.toggle("dark", dark);
+      var sun = document.getElementById("iconSun");
+      var moon = document.getElementById("iconMoon");
+      if (sun && moon) {
+        sun.classList.toggle("hidden", !dark);
+        moon.classList.toggle("hidden", dark);
+      }
+    }
+
+    function initFirebase() {
+      var cfg = PBT_CONFIG.firebase;
+      if (!cfg.apiKey || cfg.apiKey.indexOf("REPLACE") === 0) {
+        console.warn("PBT: Replace Firebase config with your project keys.");
+        return null;
+      }
+      if (!firebase.apps.length) {
+        firebase.initializeApp(cfg);
+      }
+      return firebase.auth();
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      renderCourses();
+      initTheme();
+      var y = document.getElementById("year");
+      if (y) y.textContent = new Date().getFullYear();
+
+      var lang = "en";
+      try { lang = localStorage.getItem("pbt_lang") || "en"; } catch (e) {}
+      applyI18n(lang);
+
+      document.getElementById("langToggle").addEventListener("click", function () {
+        lang = lang === "en" ? "fr" : "en";
+        applyI18n(lang);
+      });
+
+      document.getElementById("themeToggle").addEventListener("click", function () {
+        var dark = !document.documentElement.classList.contains("dark");
+        document.documentElement.classList.toggle("dark", dark);
+        try { localStorage.setItem("pbt_theme", dark ? "dark" : "light"); } catch (e) {}
+        document.getElementById("iconSun").classList.toggle("hidden", !dark);
+        document.getElementById("iconMoon").classList.toggle("hidden", dark);
+      });
+
+      document.getElementById("mobileMenuBtn").addEventListener("click", function () {
+        document.getElementById("mobileMenu").classList.toggle("hidden");
+      });
+
+      var auth = initFirebase();
+      if (!auth) return;
+
+      auth.onAuthStateChanged(function (user) {
+        var nav = document.getElementById("navAuth");
+        if (!nav) return;
+        if (user) {
+          var isAdmin = user.email && PBT_CONFIG.adminEmails.indexOf(user.email.toLowerCase()) >= 0;
+          nav.innerHTML =
+            '<a href="dashboard.html" class="text-sm text-brand-100 hover:text-white px-3 py-1.5">Dashboard</a>' +
+            (isAdmin ? '<a href="admin.html" class="text-sm text-brand-100 hover:text-white px-3 py-1.5">Admin</a>' : "") +
+            '<button type="button" id="navLogout" class="text-sm bg-brand-800 hover:bg-brand-700 text-white px-4 py-2 rounded-lg">Log out</button>';
+          var btn = document.getElementById("navLogout");
+          if (btn) btn.addEventListener("click", function () {
+            auth.signOut().then(function () { location.href = "index.html"; });
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Placement Test | PHEBIANA BILINGUAL INSTITUTE (PBT)</title>
+  <meta name="theme-color" content="#0f766e" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f766e'/%3E%3Ctext x='32' y='42' font-size='22' font-family='system-ui,sans-serif' font-weight='700' text-anchor='middle' fill='%23f59e0b'%3EPBT%3C/text%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#f0fdfa', 500:'#14b8a6', 600:'#0d9488', 700:'#0f766e', 800:'#115e59', 900:'#134e4a', 950:'#042f2e' },
+            accent: { DEFAULT:'#f59e0b', dark:'#d97706' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>[hidden]{display:none!important}</style>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-slate-50 min-h-screen dark:bg-slate-900 transition-colors">
+  <header class="bg-brand-950 text-white">
+    <div class="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2 font-bold text-sm">
+        <span class="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-brand-950 text-xs font-black">PBT</span>
+        Placement Test
+      </a>
+      <div class="flex items-center gap-3">
+        <button type="button" id="themeToggle" class="text-brand-200 hover:text-white p-1" aria-label="Theme">◐</button>
+        <a href="index.html" class="text-brand-200 text-sm hover:text-white">← Home</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-2xl mx-auto px-4 py-8">
+    <section id="intro" class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 text-center">
+      <h1 class="text-2xl font-bold text-brand-900 dark:text-brand-100 mb-2">Free Placement Test</h1>
+      <p class="text-slate-600 dark:text-slate-300 text-sm mb-4">Answer 8 questions to discover your recommended level. Takes about 5 minutes.</p>
+      <ul class="text-left text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-sm mx-auto space-y-1">
+        <li>• Mix of English &amp; French questions</li>
+        <li>• Optional 8-minute timer</li>
+        <li>• Results saved if you are signed in</li>
+      </ul>
+      <label class="flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-300 mb-4">
+        <input type="checkbox" id="useTimer" class="accent-brand-600" checked /> Enable 8-minute timer
+      </label>
+      <button type="button" id="startBtn" class="bg-accent hover:bg-accent-dark text-brand-950 font-bold px-8 py-3 rounded-xl transition">Start test</button>
+    </section>
+
+    <section id="quiz" class="hidden">
+      <div class="mb-4 flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+        <span id="progressText">Question 1 of 8</span>
+        <span id="timerDisplay" class="font-mono text-brand-700 dark:text-brand-300 font-semibold"></span>
+        <div class="w-32 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+          <div id="progressBar" class="h-full bg-brand-600 transition-all duration-300" style="width:12.5%"></div>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+        <p id="questionText" class="text-lg font-semibold text-brand-900 dark:text-brand-100 mb-6"></p>
+        <div id="options" class="space-y-3"></div>
+        <div class="mt-6 flex justify-between">
+          <button type="button" id="prevBtn" class="text-sm text-slate-500 hover:text-brand-700 px-3 py-2 hidden">← Previous</button>
+          <button type="button" id="nextBtn" class="ml-auto bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold px-5 py-2 rounded-lg disabled:opacity-50" disabled>Next →</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="result" class="hidden">
+      <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 text-center">
+        <p class="text-accent text-sm font-bold uppercase tracking-wide mb-2">Your result</p>
+        <h2 id="resultLevel" class="text-3xl font-bold text-brand-900 dark:text-brand-100 mb-2"></h2>
+        <p id="resultScore" class="text-slate-500 dark:text-slate-400 text-sm mb-2"></p>
+        <p id="resultTime" class="text-slate-400 text-xs mb-4"></p>
+        <p id="resultMsg" class="text-slate-600 dark:text-slate-300 text-sm mb-6 max-w-md mx-auto"></p>
+        <div class="mb-6 max-w-xs mx-auto">
+          <div class="h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div id="scoreBar" class="h-full bg-brand-600 transition-all duration-700" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="flex flex-wrap justify-center gap-3">
+          <a href="register.html" class="bg-accent hover:bg-accent-dark text-brand-950 font-bold px-6 py-3 rounded-xl">Create account &amp; enrol</a>
+          <a id="enrolLink" href="dashboard.html" class="border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold px-6 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700">Go to dashboard</a>
+          <button type="button" id="retakeBtn" class="border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold px-6 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700">Retake test</button>
+          <button type="button" id="shareBtn" class="text-sm text-brand-700 dark:text-brand-300 underline px-3 py-2">Share result</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const PBT_CONFIG = {
+      firebase: {
+        apiKey: "AIzaSyA75IlZR-dIvuVq-IHuesitY6g5JU6_r4c",
+        authDomain: "project1-85c38.firebaseapp.com",
+        projectId: "project1-85c38",
+        storageBucket: "project1-85c38.firebasestorage.app",
+        messagingSenderId: "104769342336",
+        appId: "1:104769342336:web:984da1d8d579cf925acf65",
+        measurementId: "G-QK27C2G0RW"
+      },
+      adminEmails: [
+        "onyekamiracle08@gmail.com",
+        "admin2@example.com",
+        "admin3@example.com",
+        "admin4@example.com"
+      ]
+    };
+
+    const FALLBACK_QUESTIONS = [
+      { q: "How do you say “Hello” in French?", options: ["Bonjour", "Au revoir", "Merci", "S’il vous plaît"], correct: 0, level: 1 },
+      { q: "Which sentence is correct?", options: ["I am go to school.", "I go to school every day.", "I goes to school.", "I going school."], correct: 1, level: 1 },
+      { q: "What does “Comment ça va ?” mean?", options: ["What is your name?", "How are you?", "Where are you from?", "Good night"], correct: 1, level: 1 },
+      { q: "Choose the correct past tense: “Yesterday I ____ to the market.”", options: ["go", "goed", "went", "going"], correct: 2, level: 2 },
+      { q: "Which is the correct French for “I would like a coffee”?", options: ["Je veux un café", "Je voudrais un café", "J’ai un café", "Je suis un café"], correct: 1, level: 2 },
+      { q: "Identify the error: “She don’t like coffee.”", options: ["She → Her", "don’t → doesn’t", "like → likes", "No error"], correct: 1, level: 2 },
+      { q: "Choose the most natural reply to “How long have you been studying French?”", options: ["I study since two years.", "I have been studying for two years.", "I am studying two years.", "I studied two years."], correct: 1, level: 3 },
+      { q: "Which French sentence uses the subjunctive correctly?", options: ["Il faut que tu viens.", "Il faut que tu viennes.", "Il faut que tu venir.", "Il faut que tu viendra."], correct: 1, level: 3 }
+    ];
+
+    var QUESTIONS = FALLBACK_QUESTIONS.slice();
+    var order = [];
+    var answers = [];
+    var current = 0;
+    var timerId = null;
+    var secondsLeft = 480;
+    var startedAt = null;
+    var timerEnabled = true;
+
+    function isConfigured() {
+      return PBT_CONFIG.firebase.apiKey && PBT_CONFIG.firebase.apiKey.indexOf("REPLACE") !== 0;
+    }
+
+    function shuffle(arr) {
+      var a = arr.slice();
+      for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
+    }
+
+    function formatTime(s) {
+      var m = Math.floor(s / 60);
+      var sec = s % 60;
+      return m + ":" + (sec < 10 ? "0" : "") + sec;
+    }
+
+    function startTimer() {
+      if (!timerEnabled) {
+        document.getElementById("timerDisplay").textContent = "";
+        return;
+      }
+      secondsLeft = 480;
+      document.getElementById("timerDisplay").textContent = formatTime(secondsLeft);
+      timerId = setInterval(function () {
+        secondsLeft--;
+        document.getElementById("timerDisplay").textContent = formatTime(Math.max(0, secondsLeft));
+        if (secondsLeft <= 0) {
+          clearInterval(timerId);
+          timerId = null;
+          finish();
+        }
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (timerId) { clearInterval(timerId); timerId = null; }
+    }
+
+    function showQuestion() {
+      var qi = order[current];
+      var q = QUESTIONS[qi];
+      document.getElementById("questionText").textContent = q.q || q.text;
+      document.getElementById("progressText").textContent = "Question " + (current + 1) + " of " + QUESTIONS.length;
+      document.getElementById("progressBar").style.width = ((current + 1) / QUESTIONS.length * 100) + "%";
+
+      var opts = q.options || [];
+      var el = document.getElementById("options");
+      el.innerHTML = opts.map(function (opt, i) {
+        var selected = answers[current] === i;
+        return '<label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition ' +
+          (selected ? "border-brand-600 bg-brand-50 dark:bg-brand-950" : "border-slate-200 dark:border-slate-600 hover:border-brand-300") + '">' +
+          '<input type="radio" name="opt" value="' + i + '" class="accent-brand-600" ' + (selected ? "checked" : "") + ' />' +
+          '<span class="text-sm text-slate-800 dark:text-slate-200">' + opt + "</span></label>";
+      }).join("");
+
+      el.querySelectorAll('input[name="opt"]').forEach(function (inp) {
+        inp.addEventListener("change", function () {
+          answers[current] = parseInt(inp.value, 10);
+          document.getElementById("nextBtn").disabled = false;
+          showQuestion();
+        });
+      });
+
+      document.getElementById("prevBtn").classList.toggle("hidden", current === 0);
+      document.getElementById("nextBtn").disabled = answers[current] === undefined || answers[current] === null;
+      document.getElementById("nextBtn").textContent = current === QUESTIONS.length - 1 ? "See results" : "Next →";
+    }
+
+    function finish() {
+      stopTimer();
+      var score = 0;
+      for (var i = 0; i < order.length; i++) {
+        var qi = order[i];
+        var correct = QUESTIONS[qi].correct;
+        if (typeof correct === "undefined" && QUESTIONS[qi].correctIndex !== undefined) correct = QUESTIONS[qi].correctIndex;
+        if (answers[i] === correct) score++;
+      }
+      var pct = Math.round((score / QUESTIONS.length) * 100);
+      var level, msg;
+      if (pct >= 85) { level = "Advanced"; msg = "Excellent! Ready for complex discussion and professional practice."; }
+      else if (pct >= 60) { level = "Intermediate"; msg = "Solid foundations. Focus on fluency and accuracy."; }
+      else if (pct >= 35) { level = "Beginner+"; msg = "Useful basics. A structured Beginner or lower Intermediate course will help."; }
+      else { level = "Beginner"; msg = "Perfect starting point. Our Beginner track builds foundations step by step."; }
+
+      var elapsed = startedAt ? Math.round((Date.now() - startedAt) / 1000) : null;
+
+      document.getElementById("resultLevel").textContent = level;
+      document.getElementById("resultScore").textContent = score + " / " + QUESTIONS.length + " correct (" + pct + "%)";
+      document.getElementById("resultTime").textContent = elapsed != null ? "Time taken: " + formatTime(elapsed) : "";
+      document.getElementById("resultMsg").textContent = msg;
+      setTimeout(function () {
+        document.getElementById("scoreBar").style.width = pct + "%";
+      }, 100);
+
+      var courseMap = { "Advanced": "advanced", "Intermediate": "intermediate", "Beginner+": "beginner", "Beginner": "beginner" };
+      document.getElementById("enrolLink").href = "register.html?course=" + (courseMap[level] || "beginner");
+
+      if (isConfigured()) {
+        try {
+          if (!firebase.apps.length) firebase.initializeApp(PBT_CONFIG.firebase);
+          var db = firebase.firestore();
+          var uid = firebase.auth().currentUser ? firebase.auth().currentUser.uid : null;
+          db.collection("placementResults").add({
+            score: score,
+            pct: pct,
+            level: level,
+            uid: uid,
+            durationSec: elapsed,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          }).catch(function (e) { console.warn("Could not save placement result", e); });
+        } catch (e) { console.warn(e); }
+      }
+
+      try {
+        localStorage.setItem("pbt_last_placement", JSON.stringify({ level: level, score: score, pct: pct, at: Date.now() }));
+      } catch (e) {}
+
+      document.getElementById("quiz").classList.add("hidden");
+      document.getElementById("result").classList.remove("hidden");
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      try {
+        if (localStorage.getItem("pbt_theme") === "dark") document.documentElement.classList.add("dark");
+      } catch (e) {}
+      document.getElementById("themeToggle").addEventListener("click", function () {
+        var dark = !document.documentElement.classList.contains("dark");
+        document.documentElement.classList.toggle("dark", dark);
+        try { localStorage.setItem("pbt_theme", dark ? "dark" : "light"); } catch (e) {}
+      });
+
+      if (isConfigured()) {
+        try {
+          if (!firebase.apps.length) firebase.initializeApp(PBT_CONFIG.firebase);
+        } catch (e) {}
+      }
+
+      document.getElementById("startBtn").addEventListener("click", function () {
+        timerEnabled = document.getElementById("useTimer").checked;
+        function begin() {
+          order = shuffle(QUESTIONS.map(function (_, i) { return i; }));
+          answers = new Array(QUESTIONS.length).fill(null);
+          current = 0;
+          startedAt = Date.now();
+          document.getElementById("intro").classList.add("hidden");
+          document.getElementById("quiz").classList.remove("hidden");
+          startTimer();
+          showQuestion();
+        }
+
+        if (isConfigured()) {
+          try {
+            if (!firebase.apps.length) firebase.initializeApp(PBT_CONFIG.firebase);
+            firebase.firestore().collection("placementQuestions").where("active", "==", true).limit(20).get()
+              .then(function (snap) {
+                if (!snap.empty) {
+                  QUESTIONS = snap.docs.map(function (d) {
+                    var x = d.data();
+                    return {
+                      q: x.text || x.q,
+                      options: x.options || [],
+                      correct: typeof x.correct === "number" ? x.correct : x.correctIndex,
+                      level: x.level || 1
+                    };
+                  });
+                }
+                begin();
+              })
+              .catch(function () { begin(); });
+            return;
+          } catch (e) {}
+        }
+        begin();
+      });
+
+      document.getElementById("nextBtn").addEventListener("click", function () {
+        if (answers[current] === null || answers[current] === undefined) return;
+        if (current === QUESTIONS.length - 1) finish();
+        else { current++; showQuestion(); }
+      });
+      document.getElementById("prevBtn").addEventListener("click", function () {
+        if (current > 0) { current--; showQuestion(); }
+      });
+      document.getElementById("retakeBtn").addEventListener("click", function () {
+        stopTimer();
+        document.getElementById("result").classList.add("hidden");
+        document.getElementById("intro").classList.remove("hidden");
+        document.getElementById("scoreBar").style.width = "0%";
+      });
+      document.getElementById("shareBtn").addEventListener("click", function () {
+        var text = document.getElementById("resultLevel").textContent + " — " + document.getElementById("resultScore").textContent + " | PBT Placement Test";
+        if (navigator.share) {
+          navigator.share({ title: "PBT Placement Result", text: text }).catch(function () {});
+        } else if (navigator.clipboard) {
+          navigator.clipboard.writeText(text).then(function () {
+            alert("Result copied to clipboard!");
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>

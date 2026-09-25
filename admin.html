@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin | PHEBIANA BILINGUAL INSTITUTE (PBT)</title>
+  <meta name="theme-color" content="#0f766e" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f766e'/%3E%3Ctext x='32' y='42' font-size='22' font-family='system-ui,sans-serif' font-weight='700' text-anchor='middle' fill='%23f59e0b'%3EPBT%3C/text%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#f0fdfa', 500:'#14b8a6', 600:'#0d9488', 700:'#0f766e', 800:'#115e59', 900:'#134e4a', 950:'#042f2e' },
+            accent: { DEFAULT:'#f59e0b', dark:'#d97706' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    [hidden]{display:none!important}
+    .toast{animation:toastIn .25s ease-out}
+    @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
+  <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
+</head>
+<body class="bg-slate-50 min-h-screen dark:bg-slate-900 transition-colors">
+  <div id="toastHost" class="fixed bottom-4 right-4 z-[100] space-y-2 max-w-sm"></div>
+
+  <header class="bg-brand-950 text-white sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2 font-bold text-sm">
+        <span class="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-brand-950 text-xs font-black">PBT</span>
+        Admin Panel
+      </a>
+      <div class="flex items-center gap-3">
+        <button type="button" id="themeToggle" class="text-brand-200 hover:text-white p-1" aria-label="Theme">◐</button>
+        <a href="dashboard.html" class="text-brand-200 text-sm hover:text-white hidden sm:inline">Dashboard</a>
+        <button type="button" id="logoutBtn" class="text-brand-200 text-sm hover:text-white">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <div id="gate" class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 text-center max-w-md mx-auto">
+      <h1 class="text-xl font-bold text-brand-900 dark:text-brand-100 mb-2">Checking admin access…</h1>
+      <p class="text-sm text-slate-500">You must sign in with a verified admin email.</p>
+      <p id="gateMsg" class="text-sm text-red-600 mt-4 hidden"></p>
+      <a href="login.html" class="inline-block mt-4 text-brand-700 font-semibold underline">Go to login</a>
+    </div>
+
+    <div id="panel" class="hidden space-y-6">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 class="text-2xl font-bold text-brand-900 dark:text-brand-100">PBT Admin</h1>
+          <p class="text-sm text-slate-500">Signed in as <span id="adminEmail" class="font-medium text-brand-800 dark:text-brand-200"></span></p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          <p class="text-xs text-slate-500 uppercase">Users</p>
+          <p id="statUsers" class="text-2xl font-bold text-brand-800 dark:text-brand-200 mt-1">—</p>
+        </div>
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          <p class="text-xs text-slate-500 uppercase">Enrolments</p>
+          <p id="statEnrol" class="text-2xl font-bold text-brand-800 dark:text-brand-200 mt-1">—</p>
+        </div>
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          <p class="text-xs text-slate-500 uppercase">Pending payments</p>
+          <p id="statPending" class="text-2xl font-bold text-amber-600 mt-1">—</p>
+        </div>
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          <p class="text-xs text-slate-500 uppercase">Placement results</p>
+          <p id="statPlace" class="text-2xl font-bold text-brand-800 dark:text-brand-200 mt-1">—</p>
+        </div>
+      </div>
+
+      <div class="flex gap-1 overflow-x-auto border-b border-slate-200 dark:border-slate-700 pb-px">
+        <button type="button" data-tab="payments" class="admin-tab shrink-0 px-4 py-2 text-sm font-semibold border-b-2 border-brand-600 text-brand-700 dark:text-brand-300">Payments</button>
+        <button type="button" data-tab="students" class="admin-tab shrink-0 px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent">Students</button>
+        <button type="button" data-tab="enrolments" class="admin-tab shrink-0 px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent">Enrolments</button>
+        <button type="button" data-tab="questions" class="admin-tab shrink-0 px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent">Placement Qs</button>
+        <button type="button" data-tab="lessons" class="admin-tab shrink-0 px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent">Lessons &amp; Media</button>
+        <button type="button" data-tab="placements" class="admin-tab shrink-0 px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent">Results</button>
+        <button type="button" data-tab="settings" class="admin-tab shrink-0 px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent">Settings</button>
+      </div>
+
+      <!-- PAYMENTS -->
+      <section id="tab-payments" class="tab-panel space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h2 class="font-bold text-brand-900 dark:text-brand-100">Payment approvals</h2>
+          <div class="flex gap-2 text-sm">
+            <button type="button" data-pay-filter="pending" class="pay-filter px-3 py-1 rounded-lg bg-amber-100 text-amber-900 font-medium">Pending</button>
+            <button type="button" data-pay-filter="approved" class="pay-filter px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600">Approved</button>
+            <button type="button" data-pay-filter="all" class="pay-filter px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600">All</button>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500">After Paystack (or Pipedream webhook) records a payment as <code>pending</code>, approve here to create a 30-day enrolment. Pipedream can also approve via Admin SDK.</p>
+        <div id="paymentsList" class="space-y-2"></div>
+        <p id="noPayments" class="text-slate-400 text-sm hidden">No payments in this filter.</p>
+
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 mt-6">
+          <h3 class="font-semibold text-brand-900 dark:text-brand-100 mb-3">Manual enrolment (no payment record)</h3>
+          <form id="manualEnrolForm" class="grid sm:grid-cols-3 gap-3 items-end">
+            <div>
+              <label class="text-xs text-slate-500">Student UID</label>
+              <input type="text" id="manualUid" required class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm" placeholder="Firebase uid" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-500">Course</label>
+              <select id="manualCourse" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm">
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+                <option value="kids-teens">Kids &amp; Teens</option>
+              </select>
+            </div>
+            <button type="submit" class="bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">Grant 30-day access</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- STUDENTS -->
+      <section id="tab-students" class="tab-panel hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h2 class="font-bold text-brand-900 dark:text-brand-100">Students</h2>
+            <div class="flex gap-2">
+              <input type="search" id="studentSearch" placeholder="Search name or email…" class="text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-1.5 w-56" />
+              <button type="button" id="exportStudents" class="text-sm text-brand-700 underline">Export CSV</button>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+              <thead class="text-xs text-slate-500 border-b dark:border-slate-600">
+                <tr>
+                  <th class="py-2 pr-4">Name</th>
+                  <th class="py-2 pr-4">Email</th>
+                  <th class="py-2 pr-4">UID</th>
+                  <th class="py-2 pr-4">Joined</th>
+                  <th class="py-2">Interest</th>
+                </tr>
+              </thead>
+              <tbody id="studentsBody"></tbody>
+            </table>
+          </div>
+          <p id="noStudents" class="text-slate-400 text-sm mt-3 hidden">No users found.</p>
+        </div>
+      </section>
+
+      <!-- ENROLMENTS -->
+      <section id="tab-enrolments" class="tab-panel hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+          <h2 class="font-bold text-brand-900 dark:text-brand-100 mb-4">Active &amp; recent enrolments</h2>
+          <div id="enrolList" class="space-y-2 text-sm"></div>
+          <p id="noEnrol" class="text-slate-400 text-sm hidden">No enrolments yet.</p>
+        </div>
+      </section>
+
+      <!-- QUESTIONS -->
+      <section id="tab-questions" class="tab-panel hidden space-y-6">
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+          <h2 class="font-bold text-brand-900 dark:text-brand-100 mb-4" id="qFormTitle">Add placement question</h2>
+          <form id="qForm" class="space-y-3 max-w-xl">
+            <input type="hidden" id="qEditId" value="" />
+            <input type="text" id="qText" required placeholder="Question text" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm" />
+            <input type="text" id="qOpt0" required placeholder="Option A" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm" />
+            <input type="text" id="qOpt1" required placeholder="Option B" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm" />
+            <input type="text" id="qOpt2" required placeholder="Option C" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm" />
+            <input type="text" id="qOpt3" required placeholder="Option D" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm" />
+            <div class="flex flex-wrap gap-3">
+              <select id="qCorrect" class="border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm">
+                <option value="0">Correct: A</option>
+                <option value="1">Correct: B</option>
+                <option value="2">Correct: C</option>
+                <option value="3">Correct: D</option>
+              </select>
+              <select id="qLevel" class="border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm">
+                <option value="1">Level 1</option>
+                <option value="2">Level 2</option>
+                <option value="3">Level 3</option>
+              </select>
+              <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                <input type="checkbox" id="qActive" checked class="accent-brand-600" /> Active
+              </label>
+            </div>
+            <div class="flex gap-2">
+              <button type="submit" class="bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">Save question</button>
+              <button type="button" id="qCancelEdit" class="hidden text-sm px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600">Cancel edit</button>
+            </div>
+          </form>
+        </div>
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+          <h2 class="font-bold text-brand-900 dark:text-brand-100 mb-4">All questions</h2>
+          <div id="questionsList" class="space-y-3"></div>
+          <p id="noQuestions" class="text-slate-400 text-sm hidden">No questions in Firestore yet (fallback bank is used on the test page).</p>
+        </div>
+      </section>
+
+      <!-- LESSONS & MEDIA -->
+      <section id="tab-lessons" class="tab-panel hidden space-y-6">
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+          <h2 class="font-bold text-brand-900 dark:text-brand-100 mb-2">Add lesson / media</h2>
+          <p class="text-xs text-slate-500 mb-4">Upload image or video via Cloudinary (fill keys in Settings), or paste an external URL.</p>
+          <form id="lessonForm" class="space-y-3 max-w-xl">
+            <input type="hidden" id="lEditId" value="" />
+            <input type="text" id="lTitle" required placeholder="Lesson title" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm" />
+            <select id="lCourse" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm">
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+              <option value="kids-teens">Kids &amp; Teens</option>
+            </select>
+            <select id="lType" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm">
+              <option value="document">Document / link</option>
+              <option value="image">Image</option>
+              <option value="video">Video</option>
+            </select>
+            <div class="flex flex-wrap gap-2 items-center">
+              <input type="url" id="lUrl" placeholder="Media or material URL" class="flex-1 min-w-[200px] border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm" />
+              <button type="button" id="btnCloudinary" class="text-sm bg-sky-600 hover:bg-sky-700 text-white font-semibold px-4 py-2 rounded-lg">Upload to Cloudinary</button>
+            </div>
+            <div id="lPreview" class="hidden text-sm"></div>
+            <input type="number" id="lOrder" value="1" min="0" class="w-24 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm" />
+            <div class="flex gap-2">
+              <button type="submit" class="bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">Save lesson</button>
+              <button type="button" id="lCancelEdit" class="hidden text-sm px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600">Cancel edit</button>
+            </div>
+          </form>
+        </div>
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+          <h2 class="font-bold text-brand-900 dark:text-brand-100 mb-4">Published lessons</h2>
+          <div id="lessonsList" class="space-y-3"></div>
+          <p id="noLessons" class="text-slate-400 text-sm hidden">No lessons yet.</p>
+        </div>
+      </section>
+
+      <!-- PLACEMENT RESULTS -->
+      <section id="tab-placements" class="tab-panel hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+          <h2 class="font-bold text-brand-900 dark:text-brand-100 mb-4">Recent placement results</h2>
+          <ul id="placeList" class="space-y-2 text-sm"></ul>
+          <p id="noPlace" class="text-slate-400 text-sm hidden">No results yet.</p>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="tab-settings" class="tab-panel hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 space-y-4 max-w-2xl">
+          <h2 class="font-bold text-brand-900 dark:text-brand-100">Integration keys (fill these in every page’s PBT_CONFIG)</h2>
+          <p class="text-sm text-slate-500">These values are stored in frontend config for Paystack popup and Cloudinary uploads. Never put secret keys (Paystack secret, Cloudinary API secret) in the browser — use Pipedream / Cloud Functions for those.</p>
+          <div class="text-sm space-y-2 font-mono bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 overflow-x-auto">
+            <p>paystackPublicKey: "<span class="text-amber-600">pk_live_YOUR_KEY_HERE</span>"</p>
+            <p>cloudinary: {</p>
+            <p class="pl-4">cloudName: "<span class="text-amber-600">YOUR_CLOUD_NAME</span>",</p>
+            <p class="pl-4">uploadPreset: "<span class="text-amber-600">YOUR_UNSIGNED_PRESET</span>"</p>
+            <p>}</p>
+            <p>pipedreamWebhookUrl: "<span class="text-amber-600">https://eo....m.pipedream.net</span>" <span class="text-slate-400">(optional client notify)</span></p>
+          </div>
+          <div class="bg-brand-50 dark:bg-brand-950 border border-brand-100 dark:border-brand-800 rounded-xl p-4 text-sm text-brand-900 dark:text-brand-100">
+            <strong>Admin emails (must match firestore.rules):</strong>
+            <ul class="mt-2 list-disc list-inside font-mono text-xs">
+              <li>......</li>
+              <li>capntanphilemon123@gmail.com</li>
+              <li>ngwanwophebe7@gmail.com</li>
+              <li>admin4@example.com ← replace</li>
+            </ul>
+            <p class="mt-2 text-xs">Email must be verified. Google sign-in recommended.</p>
+          </div>
+          <div class="text-sm text-slate-600 dark:text-slate-300 space-y-1">
+            <p><strong>Pipedream flow (recommended):</strong></p>
+            <ol class="list-decimal list-inside text-xs space-y-1">
+              <li>Paystack webhook → Pipedream</li>
+              <li>Verify signature with Paystack secret</li>
+              <li>Write/update <code>payments/{ref}</code> and create <code>enrollments/{uid}_{courseId}</code> with Firebase Admin SDK</li>
+              <li>Or leave status <code>pending</code> and approve in this panel</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const PBT_CONFIG = {
+      firebase: {
+        apiKey: "AIzaSyA75IlZR-dIvuVq-IHuesitY6g5JU6_r4c",
+        authDomain: "project1-85c38.firebaseapp.com",
+        projectId: "project1-85c38",
+        storageBucket: "project1-85c38.firebasestorage.app",
+        messagingSenderId: "104769342336",
+        appId: "1:104769342336:web:984da1d8d579cf925acf65",
+        measurementId: "G-QK27C2G0RW"
+      },
+      adminEmails: [
+        "onyekamiracle08@gmail.com",
+        "capntanphilemon123@gmail.com",
+        "ngwanwophebe7@gmail.com",
+        "admin4@example.com"
+      ],
+      /* ========== FILL THESE ========== */
+      paystackPublicKey: "pk_live_YOUR_KEY_HERE",
+      cloudinary: {
+        cloudName: "YOUR_CLOUD_NAME",
+        uploadPreset: "YOUR_UNSIGNED_PRESET"
+      },
+      pipedreamWebhookUrl: "",
+      enrolmentDays: 30,
+      courses: [
+        { id: "beginner", title: "Beginner", price: 15000 },
+        { id: "intermediate", title: "Intermediate", price: 20000 },
+        { id: "advanced", title: "Advanced", price: 25000 },
+        { id: "kids-teens", title: "Kids & Teens", price: 30000 }
+      ]
+    };
+
+    var db, auth, allStudents = [], payFilter = "pending";
+
+    function toast(msg, type) {
+      var host = document.getElementById("toastHost");
+      var el = document.createElement("div");
+      el.className = "toast px-4 py-3 rounded-xl text-sm shadow-lg border " +
+        (type === "error" ? "bg-red-50 text-red-800 border-red-200" : "bg-green-50 text-green-800 border-green-200");
+      el.textContent = msg;
+      host.appendChild(el);
+      setTimeout(function () { el.remove(); }, 4000);
+    }
+
+    function isConfigured() {
+      return PBT_CONFIG.firebase.apiKey && PBT_CONFIG.firebase.apiKey.indexOf("REPLACE") !== 0;
+    }
+
+    function isAdminUser(user) {
+      if (!user || !user.email) return false;
+      if (!user.emailVerified) return false;
+      return PBT_CONFIG.adminEmails.indexOf(user.email.toLowerCase()) >= 0;
+    }
+
+    function courseTitle(id) {
+      var c = PBT_CONFIG.courses.find(function (x) { return x.id === id; });
+      return c ? c.title : id;
+    }
+
+    function switchTab(name) {
+      document.querySelectorAll(".tab-panel").forEach(function (p) { p.classList.add("hidden"); });
+      document.querySelectorAll(".admin-tab").forEach(function (b) {
+        b.classList.remove("border-brand-600", "text-brand-700", "dark:text-brand-300", "font-semibold");
+        b.classList.add("border-transparent", "text-slate-500", "font-medium");
+      });
+      var panel = document.getElementById("tab-" + name);
+      if (panel) panel.classList.remove("hidden");
+      document.querySelectorAll(".admin-tab").forEach(function (b) {
+        if (b.getAttribute("data-tab") === name) {
+          b.classList.add("border-brand-600", "text-brand-700", "dark:text-brand-300", "font-semibold");
+          b.classList.remove("border-transparent", "text-slate-500", "font-medium");
+        }
+      });
+    }
+
+    function expiresAtTimestamp() {
+      var d = new Date();
+      d.setDate(d.getDate() + (PBT_CONFIG.enrolmentDays || 30));
+      return firebase.firestore.Timestamp.fromDate(d);
+    }
+
+    function approvePayment(paymentId, data) {
+      var enrolId = data.uid + "_" + data.courseId;
+      var batch = db.batch();
+      batch.set(db.collection("enrollments").doc(enrolId), {
+        uid: data.uid,
+        courseId: data.courseId,
+        status: "active",
+        expiresAt: expiresAtTimestamp(),
+        paymentId: paymentId,
+        paystackRef: data.paystackRef || null,
+        approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        approvedBy: auth.currentUser.email
+      }, { merge: true });
+      batch.update(db.collection("payments").doc(paymentId), {
+        status: "approved",
+        approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        approvedBy: auth.currentUser.email
+      });
+      return batch.commit().then(function () {
+        toast("Payment approved · enrolment created", "success");
+        loadPayments();
+        loadEnrolments();
+        refreshStats();
+      });
+    }
+
+    function rejectPayment(paymentId) {
+      return db.collection("payments").doc(paymentId).update({
+        status: "rejected",
+        rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        rejectedBy: auth.currentUser.email
+      }).then(function () {
+        toast("Payment rejected", "success");
+        loadPayments();
+        refreshStats();
+      });
+    }
+
+    function loadPayments() {
+      var q = db.collection("payments").orderBy("createdAt", "desc").limit(80);
+      q.get().then(function (snap) {
+        var items = [];
+        snap.forEach(function (doc) {
+          var d = doc.data();
+          if (payFilter === "pending" && d.status !== "pending") return;
+          if (payFilter === "approved" && d.status !== "approved") return;
+          items.push({ id: doc.id, data: d });
+        });
+        var list = document.getElementById("paymentsList");
+        var no = document.getElementById("noPayments");
+        if (!items.length) {
+          list.innerHTML = "";
+          no.classList.remove("hidden");
+          return;
+        }
+        no.classList.add("hidden");
+        list.innerHTML = items.map(function (item) {
+          var d = item.data;
+          var when = d.createdAt && d.createdAt.toDate ? d.createdAt.toDate().toLocaleString() : "";
+          var statusColor = d.status === "pending" ? "bg-amber-100 text-amber-900" :
+            d.status === "approved" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
+          var actions = d.status === "pending"
+            ? '<button type="button" data-approve="' + item.id + '" class="text-xs bg-green-600 text-white px-3 py-1 rounded-lg mr-1">Approve</button>' +
+              '<button type="button" data-reject="' + item.id + '" class="text-xs bg-red-600 text-white px-3 py-1 rounded-lg">Reject</button>'
+            : "";
+          return '<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3" data-pay-row="' + item.id + '">' +
+            '<div class="text-sm">' +
+            '<span class="inline-block text-xs font-semibold px-2 py-0.5 rounded ' + statusColor + '">' + (d.status || "") + '</span> ' +
+            '<span class="font-medium">' + courseTitle(d.courseId) + '</span>' +
+            '<p class="text-xs text-slate-500 mt-1">UID: ' + (d.uid || "—") + ' · ' + (d.amount != null ? d.amount.toLocaleString("fr-FR") + " XAF" : "") +
+            (d.paystackRef ? " · Ref: " + d.paystackRef : "") + '</p>' +
+            '<p class="text-xs text-slate-400">' + when + (d.email ? " · " + d.email : "") + '</p></div>' +
+            '<div>' + actions + '</div></div>';
+        }).join("");
+
+        list.querySelectorAll("[data-approve]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var id = btn.getAttribute("data-approve");
+            var row = items.find(function (x) { return x.id === id; });
+            if (!row) return;
+            btn.disabled = true;
+            approvePayment(id, row.data).catch(function (e) {
+              toast(e.message || "Approve failed", "error");
+              btn.disabled = false;
+            });
+          });
+        });
+        list.querySelectorAll("[data-reject]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            if (!confirm("Reject this payment?")) return;
+            rejectPayment(btn.getAttribute("data-reject")).catch(function (e) {
+              toast(e.message || "Reject failed", "error");
+            });
+          });
+        });
+      }).catch(function (e) {
+        document.getElementById("noPayments").textContent = e.message;
+        document.getElementById("noPayments").classList.remove("hidden");
+      });
+    }
+
+    function renderStudents(filter) {
+      var q = (filter || "").toLowerCase();
+      var filtered = allStudents.filter(function (u) {
+        if (!q) return true;
+        return (u.name + " " + (u.email || "") + " " + (u.uid || "")).toLowerCase().indexOf(q) >= 0;
+      });
+      var tbody = document.getElementById("studentsBody");
+      var noS = document.getElementById("noStudents");
+      if (!filtered.length) {
+        tbody.innerHTML = "";
+        noS.classList.remove("hidden");
+        return;
+      }
+      noS.classList.add("hidden");
+      tbody.innerHTML = filtered.map(function (u) {
+        return '<tr class="border-b border-slate-100 dark:border-slate-700">' +
+          '<td class="py-2.5 pr-4 font-medium">' + u.name + '</td>' +
+          '<td class="py-2.5 pr-4">' + (u.email || "—") + '</td>' +
+          '<td class="py-2.5 pr-4 font-mono text-xs">' + (u.uid || "").slice(0, 12) + '…</td>' +
+          '<td class="py-2.5 pr-4">' + u.joined + '</td>' +
+          '<td class="py-2.5">' + (u.interestedCourse || "—") + '</td></tr>';
+      }).join("");
+    }
+
+    function loadStudents() {
+      db.collection("users").orderBy("createdAt", "desc").limit(300).get()
+        .then(function (snap) {
+          document.getElementById("statUsers").textContent = snap.size;
+          allStudents = snap.docs.map(function (d) {
+            var u = d.data();
+            return {
+              uid: d.id,
+              name: ((u.firstName || "") + " " + (u.lastName || "")).trim() || "—",
+              email: u.email || "—",
+              joined: u.createdAt && u.createdAt.toDate ? u.createdAt.toDate().toLocaleDateString() : "—",
+              interestedCourse: u.interestedCourse || ""
+            };
+          });
+          renderStudents("");
+        })
+        .catch(function (e) {
+          document.getElementById("noStudents").textContent = e.message;
+          document.getElementById("noStudents").classList.remove("hidden");
+        });
+    }
+
+    function loadEnrolments() {
+      db.collection("enrollments").orderBy("approvedAt", "desc").limit(100).get()
+        .then(function (snap) {
+          document.getElementById("statEnrol").textContent = snap.size;
+          var list = document.getElementById("enrolList");
+          var no = document.getElementById("noEnrol");
+          if (snap.empty) {
+            list.innerHTML = "";
+            no.classList.remove("hidden");
+            return;
+          }
+          no.classList.add("hidden");
+          list.innerHTML = snap.docs.map(function (doc) {
+            var e = doc.data();
+            var exp = e.expiresAt && e.expiresAt.toDate ? e.expiresAt.toDate().toLocaleDateString() : "—";
+            var active = e.status === "active";
+            return '<div class="flex flex-wrap justify-between gap-2 p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700">' +
+              '<div><span class="font-medium">' + courseTitle(e.courseId) + '</span>' +
+              ' <span class="text-xs ' + (active ? "text-green-600" : "text-slate-400") + '">' + (e.status || "") + '</span>' +
+              '<p class="text-xs text-slate-500">UID: ' + (e.uid || "") + ' · expires ' + exp + '</p></div>' +
+              (active ? '<button type="button" data-revoke="' + doc.id + '" class="text-xs text-red-600 underline">Revoke</button>' : "") +
+              '</div>';
+          }).join("");
+          list.querySelectorAll("[data-revoke]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              if (!confirm("Revoke this enrolment?")) return;
+              db.collection("enrollments").doc(btn.getAttribute("data-revoke")).update({
+                status: "revoked",
+                revokedAt: firebase.firestore.FieldValue.serverTimestamp()
+              }).then(function () {
+                toast("Enrolment revoked", "success");
+                loadEnrolments();
+              }).catch(function (e) { toast(e.message, "error"); });
+            });
+          });
+        })
+        .catch(function () {
+          document.getElementById("statEnrol").textContent = "—";
+          document.getElementById("noEnrol").classList.remove("hidden");
+        });
+    }
+
+    function loadQuestions() {
+      db.collection("placementQuestions").orderBy("createdAt", "desc").limit(100).get()
+        .then(function (snap) {
+          var list = document.getElementById("questionsList");
+          var no = document.getElementById("noQuestions");
+          if (snap.empty) {
+            list.innerHTML = "";
+            no.classList.remove("hidden");
+            return;
+          }
+          no.classList.add("hidden");
+          list.innerHTML = snap.docs.map(function (doc) {
+            var q = doc.data();
+            var opts = (q.options || []).map(function (o, i) {
+              return (i === q.correct ? "✓ " : "") + o;
+            }).join(" · ");
+            return '<div class="border border-slate-200 dark:border-slate-700 rounded-xl p-4">' +
+              '<div class="flex flex-wrap justify-between gap-2">' +
+              '<p class="font-medium text-sm text-brand-900 dark:text-brand-100">' + (q.text || q.q || "") + '</p>' +
+              '<span class="text-xs text-slate-400">L' + (q.level || 1) + (q.active === false ? " · inactive" : "") + '</span></div>' +
+              '<p class="text-xs text-slate-500 mt-1">' + opts + '</p>' +
+              '<div class="mt-2 flex gap-2">' +
+              '<button type="button" data-q-edit="' + doc.id + '" class="text-xs text-brand-700 underline">Edit</button>' +
+              '<button type="button" data-q-del="' + doc.id + '" class="text-xs text-red-600 underline">Delete</button>' +
+              '<button type="button" data-q-toggle="' + doc.id + '" class="text-xs text-slate-600 underline">' + (q.active === false ? "Activate" : "Deactivate") + '</button>' +
+              '</div></div>';
+          }).join("");
+
+          var docsMap = {};
+          snap.docs.forEach(function (d) { docsMap[d.id] = d.data(); });
+
+          list.querySelectorAll("[data-q-edit]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              var id = btn.getAttribute("data-q-edit");
+              var q = docsMap[id];
+              document.getElementById("qEditId").value = id;
+              document.getElementById("qText").value = q.text || q.q || "";
+              (q.options || []).forEach(function (o, i) {
+                var el = document.getElementById("qOpt" + i);
+                if (el) el.value = o;
+              });
+              document.getElementById("qCorrect").value = String(q.correct != null ? q.correct : 0);
+              document.getElementById("qLevel").value = String(q.level || 1);
+              document.getElementById("qActive").checked = q.active !== false;
+              document.getElementById("qFormTitle").textContent = "Edit placement question";
+              document.getElementById("qCancelEdit").classList.remove("hidden");
+              document.getElementById("qText").scrollIntoView({ behavior: "smooth", block: "center" });
+            });
+          });
+          list.querySelectorAll("[data-q-del]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              if (!confirm("Delete this question permanently?")) return;
+              db.collection("placementQuestions").doc(btn.getAttribute("data-q-del")).delete()
+                .then(function () { toast("Deleted", "success"); loadQuestions(); })
+                .catch(function (e) { toast(e.message, "error"); });
+            });
+          });
+          list.querySelectorAll("[data-q-toggle]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              var id = btn.getAttribute("data-q-toggle");
+              var q = docsMap[id];
+              db.collection("placementQuestions").doc(id).update({ active: q.active === false })
+                .then(function () { loadQuestions(); })
+                .catch(function (e) { toast(e.message, "error"); });
+            });
+          });
+        })
+        .catch(function () {
+          document.getElementById("noQuestions").classList.remove("hidden");
+        });
+    }
+
+    function loadLessons() {
+      db.collection("lessons").orderBy("order", "asc").limit(100).get()
+        .then(function (snap) {
+          var list = document.getElementById("lessonsList");
+          var no = document.getElementById("noLessons");
+          if (snap.empty) {
+            list.innerHTML = "";
+            no.classList.remove("hidden");
+            return;
+          }
+          no.classList.add("hidden");
+          var docsMap = {};
+          snap.docs.forEach(function (d) { docsMap[d.id] = d.data(); });
+          list.innerHTML = snap.docs.map(function (doc) {
+            var l = doc.data();
+            var media = "";
+            if (l.type === "image" && l.url) {
+              media = '<img src="' + l.url + '" alt="" class="mt-2 max-h-24 rounded-lg" />';
+            } else if (l.type === "video" && l.url) {
+              media = '<video src="' + l.url + '" controls class="mt-2 max-h-32 rounded-lg w-full max-w-md"></video>';
+            } else if (l.url) {
+              media = '<a href="' + l.url + '" target="_blank" rel="noopener" class="text-xs text-brand-700 underline block mt-1">Open link</a>';
+            }
+            return '<div class="border border-slate-200 dark:border-slate-700 rounded-xl p-4">' +
+              '<div class="flex flex-wrap justify-between gap-2">' +
+              '<p class="font-medium text-sm">' + (l.title || "") + '</p>' +
+              '<span class="text-xs text-slate-400">' + courseTitle(l.courseId) + ' · ' + (l.type || "document") + '</span></div>' +
+              media +
+              '<div class="mt-2 flex gap-2">' +
+              '<button type="button" data-l-edit="' + doc.id + '" class="text-xs text-brand-700 underline">Edit</button>' +
+              '<button type="button" data-l-del="' + doc.id + '" class="text-xs text-red-600 underline">Delete</button>' +
+              '</div></div>';
+          }).join("");
+
+          list.querySelectorAll("[data-l-edit]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              var id = btn.getAttribute("data-l-edit");
+              var l = docsMap[id];
+              document.getElementById("lEditId").value = id;
+              document.getElementById("lTitle").value = l.title || "";
+              document.getElementById("lCourse").value = l.courseId || "beginner";
+              document.getElementById("lType").value = l.type || "document";
+              document.getElementById("lUrl").value = l.url || "";
+              document.getElementById("lOrder").value = l.order != null ? l.order : 1;
+              document.getElementById("lCancelEdit").classList.remove("hidden");
+              showPreview(l.url, l.type);
+            });
+          });
+          list.querySelectorAll("[data-l-del]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              if (!confirm("Delete this lesson?")) return;
+              db.collection("lessons").doc(btn.getAttribute("data-l-del")).delete()
+                .then(function () { toast("Deleted", "success"); loadLessons(); })
+                .catch(function (e) { toast(e.message, "error"); });
+            });
+          });
+        })
+        .catch(function () {
+          document.getElementById("noLessons").classList.remove("hidden");
+        });
+    }
+
+    function showPreview(url, type) {
+      var prev = document.getElementById("lPreview");
+      if (!url) { prev.classList.add("hidden"); prev.innerHTML = ""; return; }
+      prev.classList.remove("hidden");
+      if (type === "image") prev.innerHTML = '<img src="' + url + '" class="max-h-32 rounded-lg" alt="preview" />';
+      else if (type === "video") prev.innerHTML = '<video src="' + url + '" controls class="max-h-40 rounded-lg w-full max-w-md"></video>';
+      else prev.innerHTML = '<a href="' + url + '" target="_blank" class="text-brand-700 underline text-xs">' + url + '</a>';
+    }
+
+    function loadPlacements() {
+      db.collection("placementResults").orderBy("createdAt", "desc").limit(40).get()
+        .then(function (snap) {
+          document.getElementById("statPlace").textContent = snap.size;
+          var pl = document.getElementById("placeList");
+          var noP = document.getElementById("noPlace");
+          if (snap.empty) {
+            noP.classList.remove("hidden");
+            return;
+          }
+          noP.classList.add("hidden");
+          pl.innerHTML = snap.docs.map(function (d) {
+            var r = d.data();
+            var when = r.createdAt && r.createdAt.toDate ? r.createdAt.toDate().toLocaleString() : "";
+            return '<li class="flex justify-between p-2 bg-slate-50 dark:bg-slate-900 rounded-lg"><span>' +
+              (r.level || "—") + " · " + (r.score != null ? r.score : "—") + " (" + (r.pct != null ? r.pct + "%" : "—") +
+              ")</span><span class=\"text-slate-400 text-xs\">" + when + "</span></li>";
+          }).join("");
+        })
+        .catch(function () {
+          document.getElementById("noPlace").classList.remove("hidden");
+        });
+    }
+
+    function refreshStats() {
+      db.collection("payments").where("status", "==", "pending").get()
+        .then(function (snap) { document.getElementById("statPending").textContent = snap.size; })
+        .catch(function () { document.getElementById("statPending").textContent = "—"; });
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      try {
+        if (localStorage.getItem("pbt_theme") === "dark") document.documentElement.classList.add("dark");
+      } catch (e) {}
+      document.getElementById("themeToggle").addEventListener("click", function () {
+        var dark = !document.documentElement.classList.contains("dark");
+        document.documentElement.classList.toggle("dark", dark);
+        try { localStorage.setItem("pbt_theme", dark ? "dark" : "light"); } catch (e) {}
+      });
+
+      if (!isConfigured()) {
+        document.getElementById("gateMsg").textContent = "Firebase is not configured.";
+        document.getElementById("gateMsg").classList.remove("hidden");
+        return;
+      }
+      if (!firebase.apps.length) firebase.initializeApp(PBT_CONFIG.firebase);
+      auth = firebase.auth();
+      db = firebase.firestore();
+
+      document.getElementById("logoutBtn").addEventListener("click", function () {
+        auth.signOut().then(function () { location.href = "index.html"; });
+      });
+
+      document.querySelectorAll(".admin-tab").forEach(function (btn) {
+        btn.addEventListener("click", function () { switchTab(btn.getAttribute("data-tab")); });
+      });
+
+      document.querySelectorAll(".pay-filter").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          payFilter = btn.getAttribute("data-pay-filter");
+          document.querySelectorAll(".pay-filter").forEach(function (b) {
+            b.className = "pay-filter px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600";
+          });
+          btn.className = "pay-filter px-3 py-1 rounded-lg bg-amber-100 text-amber-900 font-medium";
+          loadPayments();
+        });
+      });
+
+      document.getElementById("studentSearch").addEventListener("input", function () {
+        renderStudents(this.value);
+      });
+
+      document.getElementById("exportStudents").addEventListener("click", function () {
+        var rows = [["Name", "Email", "UID", "Joined", "Interest"]].concat(allStudents.map(function (u) {
+          return [u.name, u.email || "", u.uid || "", u.joined, u.interestedCourse || ""];
+        }));
+        var csv = rows.map(function (r) {
+          return r.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(",");
+        }).join("\n");
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+        a.download = "pbt-students.csv";
+        a.click();
+      });
+
+      document.getElementById("manualEnrolForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var uid = document.getElementById("manualUid").value.trim();
+        var courseId = document.getElementById("manualCourse").value;
+        if (!uid) return;
+        var enrolId = uid + "_" + courseId;
+        db.collection("enrollments").doc(enrolId).set({
+          uid: uid,
+          courseId: courseId,
+          status: "active",
+          expiresAt: expiresAtTimestamp(),
+          approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          approvedBy: auth.currentUser.email,
+          source: "manual"
+        }, { merge: true }).then(function () {
+          toast("Enrolment granted", "success");
+          e.target.reset();
+          loadEnrolments();
+        }).catch(function (err) { toast(err.message, "error"); });
+      });
+
+      document.getElementById("qForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var editId = document.getElementById("qEditId").value;
+        var payload = {
+          text: document.getElementById("qText").value.trim(),
+          options: [
+            document.getElementById("qOpt0").value.trim(),
+            document.getElementById("qOpt1").value.trim(),
+            document.getElementById("qOpt2").value.trim(),
+            document.getElementById("qOpt3").value.trim()
+          ],
+          correct: parseInt(document.getElementById("qCorrect").value, 10),
+          level: parseInt(document.getElementById("qLevel").value, 10),
+          active: document.getElementById("qActive").checked,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        var p = editId
+          ? db.collection("placementQuestions").doc(editId).set(payload, { merge: true })
+          : db.collection("placementQuestions").add(Object.assign(payload, {
+              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }));
+        p.then(function () {
+          toast(editId ? "Question updated" : "Question saved", "success");
+          document.getElementById("qForm").reset();
+          document.getElementById("qEditId").value = "";
+          document.getElementById("qFormTitle").textContent = "Add placement question";
+          document.getElementById("qCancelEdit").classList.add("hidden");
+          document.getElementById("qActive").checked = true;
+          loadQuestions();
+        }).catch(function (err) { toast(err.message, "error"); });
+      });
+
+      document.getElementById("qCancelEdit").addEventListener("click", function () {
+        document.getElementById("qForm").reset();
+        document.getElementById("qEditId").value = "";
+        document.getElementById("qFormTitle").textContent = "Add placement question";
+        this.classList.add("hidden");
+        document.getElementById("qActive").checked = true;
+      });
+
+      document.getElementById("btnCloudinary").addEventListener("click", function () {
+        var cloud = PBT_CONFIG.cloudinary || {};
+        if (!cloud.cloudName || cloud.cloudName.indexOf("YOUR_") === 0 || !cloud.uploadPreset || cloud.uploadPreset.indexOf("YOUR_") === 0) {
+          toast("Set cloudinary.cloudName and uploadPreset in PBT_CONFIG (Settings tab)", "error");
+          return;
+        }
+        if (typeof cloudinary === "undefined") {
+          toast("Cloudinary widget failed to load", "error");
+          return;
+        }
+        var widget = cloudinary.createUploadWidget({
+          cloudName: cloud.cloudName,
+          uploadPreset: cloud.uploadPreset,
+          sources: ["local", "url", "camera"],
+          multiple: false,
+          maxFileSize: 100000000,
+          resourceType: "auto"
+        }, function (error, result) {
+          if (error) {
+            toast(error.message || "Upload failed", "error");
+            return;
+          }
+          if (result && result.event === "success") {
+            var info = result.info;
+            document.getElementById("lUrl").value = info.secure_url || info.url;
+            var rt = info.resource_type || "";
+            if (rt === "image") document.getElementById("lType").value = "image";
+            else if (rt === "video") document.getElementById("lType").value = "video";
+            showPreview(document.getElementById("lUrl").value, document.getElementById("lType").value);
+            toast("Uploaded to Cloudinary", "success");
+          }
+        });
+        widget.open();
+      });
+
+      document.getElementById("lessonForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var editId = document.getElementById("lEditId").value;
+        var payload = {
+          title: document.getElementById("lTitle").value.trim(),
+          courseId: document.getElementById("lCourse").value,
+          type: document.getElementById("lType").value,
+          url: document.getElementById("lUrl").value.trim() || null,
+          order: parseInt(document.getElementById("lOrder").value, 10) || 0,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        var p = editId
+          ? db.collection("lessons").doc(editId).set(payload, { merge: true })
+          : db.collection("lessons").add(Object.assign(payload, {
+              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }));
+        p.then(function () {
+          toast(editId ? "Lesson updated" : "Lesson saved", "success");
+          e.target.reset();
+          document.getElementById("lEditId").value = "";
+          document.getElementById("lCancelEdit").classList.add("hidden");
+          document.getElementById("lPreview").classList.add("hidden");
+          loadLessons();
+        }).catch(function (err) { toast(err.message, "error"); });
+      });
+
+      document.getElementById("lCancelEdit").addEventListener("click", function () {
+        document.getElementById("lessonForm").reset();
+        document.getElementById("lEditId").value = "";
+        this.classList.add("hidden");
+        document.getElementById("lPreview").classList.add("hidden");
+      });
+
+      auth.onAuthStateChanged(function (user) {
+        if (!user) {
+          document.getElementById("gateMsg").textContent = "You are not signed in.";
+          document.getElementById("gateMsg").classList.remove("hidden");
+          return;
+        }
+        if (!user.emailVerified) {
+          document.getElementById("gateMsg").textContent = "Your email is not verified. Verify it, then try again.";
+          document.getElementById("gateMsg").classList.remove("hidden");
+          return;
+        }
+        if (!isAdminUser(user)) {
+          document.getElementById("gateMsg").textContent = "This account is not an admin email.";
+          document.getElementById("gateMsg").classList.remove("hidden");
+          return;
+        }
+
+        document.getElementById("gate").classList.add("hidden");
+        document.getElementById("panel").classList.remove("hidden");
+        document.getElementById("adminEmail").textContent = user.email;
+
+        loadStudents();
+        loadPayments();
+        loadEnrolments();
+        loadQuestions();
+        loadLessons();
+        loadPlacements();
+        refreshStats();
+      });
+    });
+  </script>
+</body>
+</html>

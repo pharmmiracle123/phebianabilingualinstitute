@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Legal | PHEBIANA BILINGUAL INSTITUTE (PBT)</title>
+  <meta name="theme-color" content="#0f766e" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f766e'/%3E%3Ctext x='32' y='42' font-size='22' font-family='system-ui,sans-serif' font-weight='700' text-anchor='middle' fill='%23f59e0b'%3EPBT%3C/text%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 700:'#0f766e', 900:'#134e4a', 950:'#042f2e' },
+            accent: { DEFAULT:'#f59e0b' }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-50 min-h-screen">
+  <header class="bg-brand-950 text-white">
+    <div class="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2 font-bold text-sm">
+        <span class="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-brand-950 text-xs font-black">PBT</span>
+        Legal
+      </a>
+      <a href="index.html" class="text-sm text-brand-200 hover:text-white">← Home</a>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-4 py-10">
+    <h1 class="text-2xl font-bold text-brand-900 mb-6">Legal &amp; Policies</h1>
+
+    <section class="bg-white rounded-xl border border-slate-200 p-6 mb-6">
+      <h2 class="font-bold text-brand-900 mb-2">Terms of use</h2>
+      <p class="text-sm text-slate-600 leading-relaxed">
+        By using the PHEBIANA BILINGUAL INSTITUTE (PBT) platform you agree to use the service for personal learning only.
+        Accounts are personal and non-transferable. Course access is granted for the period defined at enrolment after successful payment verification.
+        Live class links and materials are for enrolled students only.
+      </p>
+    </section>
+
+    <section class="bg-white rounded-xl border border-slate-200 p-6 mb-6">
+      <h2 class="font-bold text-brand-900 mb-2">Privacy</h2>
+      <p class="text-sm text-slate-600 leading-relaxed">
+        We collect account details (name, email) and learning activity to deliver the service via Firebase Authentication and Firestore.
+        Data is not sold to third parties. You may request deletion of your account data by contacting support.
+        Authentication may use Google, Apple, GitHub, or email/password as you choose.
+      </p>
+    </section>
+
+    <section class="bg-white rounded-xl border border-slate-200 p-6 mb-6">
+      <h2 class="font-bold text-brand-900 mb-2">Payments &amp; refunds</h2>
+      <p class="text-sm text-slate-600 leading-relaxed">
+        Course fees are charged according to the selected plan. Enrolments are activated only after server-side payment verification.
+        Refund requests are handled according to institute policy and must be submitted in writing to support.
+      </p>
+    </section>
+
+    <section class="bg-white rounded-xl border border-slate-200 p-6 mb-6">
+      <h2 class="font-bold text-brand-900 mb-2">Contact</h2>
+      <p class="text-sm text-slate-600">
+        PHEBIANA BILINGUAL INSTITUTE (PBT)<br />
+        Email: support@phebiana.edu<br />
+        Hours: Monday to Saturday, 8:00 am – 8:00 pm
+      </p>
+    </section>
+
+    <p class="text-xs text-slate-400 mt-8">© <span id="year"></span> PHEBIANA BILINGUAL INSTITUTE (PBT). All rights reserved.</p>
+  </main>
+  <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+</body>
+</html>

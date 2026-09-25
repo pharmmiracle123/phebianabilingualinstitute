@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard | PHEBIANA BILINGUAL INSTITUTE (PBT)</title>
+  <meta name="theme-color" content="#0f766e" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f766e'/%3E%3Ctext x='32' y='42' font-size='22' font-family='system-ui,sans-serif' font-weight='700' text-anchor='middle' fill='%23f59e0b'%3EPBT%3C/text%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#f0fdfa', 100:'#ccfbf1', 500:'#14b8a6', 600:'#0d9488', 700:'#0f766e', 800:'#115e59', 900:'#134e4a', 950:'#042f2e' },
+            accent: { DEFAULT:'#f59e0b', dark:'#d97706' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>[hidden]{display:none!important}</style>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+</head>
+<body class="bg-slate-50 min-h-screen dark:bg-slate-900 transition-colors">
+  <div id="toastHost" class="fixed bottom-4 right-4 z-[100] space-y-2 max-w-sm"></div>
+  <header class="bg-brand-950 text-white sticky top-0 z-40">
+    <div class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2 font-bold text-sm">
+        <span class="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-brand-950 text-xs font-black">PBT</span>
+        <span class="hidden sm:inline">Dashboard</span>
+      </a>
+      <div class="flex items-center gap-3 text-sm">
+        <button type="button" id="themeToggle" class="text-brand-200 hover:text-white p-1" aria-label="Theme">◐</button>
+        <span id="userName" class="text-brand-200"></span>
+        <button type="button" id="logoutBtn" class="text-brand-200 hover:text-white px-2 py-1">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-8">
+    <div id="loading" class="text-center py-16 text-slate-500">Loading your account…</div>
+    <div id="content" class="hidden">
+      <div class="mb-8">
+        <h1 class="text-2xl font-bold text-brand-900 dark:text-brand-100">Welcome back</h1>
+        <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Your learning hub at PHEBIANA BILINGUAL INSTITUTE</p>
+        <p id="verifyBanner" class="hidden mt-3 text-sm bg-amber-50 text-amber-900 border border-amber-200 rounded-lg px-4 py-2 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-800">
+          Please verify your email. Check your inbox (and spam). <button type="button" id="resendVerify" class="underline font-semibold">Resend verification</button>
+        </p>
+      </div>
+
+      <div class="flex gap-2 border-b border-slate-200 dark:border-slate-700 mb-6 overflow-x-auto">
+        <button type="button" data-tab="overview" class="tab-btn px-4 py-2 text-sm font-semibold border-b-2 border-brand-600 text-brand-700 dark:text-brand-300">Overview</button>
+        <button type="button" data-tab="courses" class="tab-btn px-4 py-2 text-sm font-medium text-slate-500 hover:text-brand-700 border-b-2 border-transparent">My courses</button>
+        <button type="button" data-tab="enrol" class="tab-btn px-4 py-2 text-sm font-medium text-slate-500 hover:text-brand-700 border-b-2 border-transparent">Enrol</button>
+        <button type="button" data-tab="materials" class="tab-btn px-4 py-2 text-sm font-medium text-slate-500 hover:text-brand-700 border-b-2 border-transparent">Materials</button>
+        <button type="button" data-tab="profile" class="tab-btn px-4 py-2 text-sm font-medium text-slate-500 hover:text-brand-700 border-b-2 border-transparent">Profile</button>
+      </div>
+
+      <section id="tab-overview" class="tab-panel space-y-6">
+        <div class="grid sm:grid-cols-3 gap-4">
+          <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
+            <p class="text-xs text-slate-500 uppercase tracking-wide">Active enrolments</p>
+            <p id="statCourses" class="text-3xl font-bold text-brand-800 dark:text-brand-200 mt-1">0</p>
+          </div>
+          <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
+            <p class="text-xs text-slate-500 uppercase tracking-wide">Account</p>
+            <p id="statEmail" class="text-sm font-medium text-brand-800 dark:text-brand-200 mt-2 truncate">—</p>
+          </div>
+          <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
+            <p class="text-xs text-slate-500 uppercase tracking-wide">Last placement</p>
+            <p id="statPlacement" class="text-sm font-medium text-brand-800 dark:text-brand-200 mt-2">—</p>
+          </div>
+        </div>
+        <div class="bg-brand-50 dark:bg-brand-950 border border-brand-100 dark:border-brand-800 rounded-xl p-5">
+          <h3 class="font-semibold text-brand-900 dark:text-brand-100 mb-2">Quick actions</h3>
+          <div class="flex flex-wrap gap-2">
+            <a href="placement.html" class="text-sm bg-white dark:bg-slate-800 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-200 px-4 py-2 rounded-lg hover:bg-brand-100">Placement test</a>
+            <button type="button" data-tab-link="enrol" class="text-sm bg-accent text-brand-950 font-semibold px-4 py-2 rounded-lg hover:bg-accent-dark">Enrol in a course</button>
+            <button type="button" data-tab-link="profile" class="text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 px-4 py-2 rounded-lg">Edit profile</button>
+          </div>
+        </div>
+        <div id="upcomingClasses" class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
+          <h3 class="font-semibold text-brand-900 dark:text-brand-100 mb-3">Live class tips</h3>
+          <p class="text-sm text-slate-600 dark:text-slate-300">Join via the “Join class” button on each enrolled course. Classes run 2× per week on Google Meet. Arrive 5 minutes early with headphones and a quiet space.</p>
+        </div>
+      </section>
+
+      <section id="tab-courses" class="tab-panel hidden">
+        <div id="myCoursesList" class="space-y-4"></div>
+        <p id="noCourses" class="text-slate-500 text-sm hidden">You have no active enrolments yet. Use the Enrol tab after payment is confirmed.</p>
+      </section>
+
+      <section id="tab-enrol" class="tab-panel hidden">
+        <p class="text-slate-600 dark:text-slate-300 text-sm mb-4">Select a course. After payment is verified by the server, your enrolment appears under My courses. (Wire Paystack / Flutterwave webhook to write to <code class="text-xs bg-slate-100 dark:bg-slate-700 px-1 rounded">enrollments</code>.)</p>
+        <div id="enrolGrid" class="grid sm:grid-cols-2 gap-4"></div>
+      </section>
+
+      <section id="tab-materials" class="tab-panel hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+          <h3 class="font-semibold text-brand-900 dark:text-brand-100 mb-3">Lesson materials</h3>
+          <p class="text-slate-500 text-sm mb-4">Materials unlock for courses with an active enrolment (Firestore rules).</p>
+          <div id="materialsList" class="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+            <p class="text-slate-400">Sign in and enrol to see lesson files assigned to your courses.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-profile" class="tab-panel hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 max-w-lg">
+          <h3 class="font-semibold text-brand-900 dark:text-brand-100 mb-4">Your profile</h3>
+          <form id="profileForm" class="space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">First name</label>
+                <input type="text" id="profFirst" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-xl px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Last name</label>
+                <input type="text" id="profLast" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-xl px-3 py-2 text-sm" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Email (read-only)</label>
+              <input type="email" id="profEmail" disabled class="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-xl px-3 py-2 text-sm text-slate-500" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Preferred language</label>
+              <select id="profLang" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-xl px-3 py-2 text-sm">
+                <option value="en">English</option>
+                <option value="fr">Français</option>
+              </select>
+            </div>
+            <button type="submit" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-2 rounded-xl text-sm">Save profile</button>
+          </form>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const PBT_CONFIG = {
+      firebase: {
+        apiKey: "AIzaSyA75IlZR-dIvuVq-IHuesitY6g5JU6_r4c",
+        authDomain: "project1-85c38.firebaseapp.com",
+        projectId: "project1-85c38",
+        storageBucket: "project1-85c38.firebasestorage.app",
+        messagingSenderId: "104769342336",
+        appId: "1:104769342336:web:984da1d8d579cf925acf65",
+        measurementId: "G-QK27C2G0RW"
+      },
+      adminEmails: [
+        "onyekamiracle08@gmail.com",
+        "admin2@example.com",
+        "admin3@example.com",
+        "admin4@example.com"
+      ],
+      /* ========== FILL THESE ========== */
+      paystackPublicKey: "pk_live_YOUR_KEY_HERE",
+      cloudinary: {
+        cloudName: "YOUR_CLOUD_NAME",
+        uploadPreset: "YOUR_UNSIGNED_PRESET"
+      },
+      pipedreamWebhookUrl: "",
+      enrolmentDays: 30,
+      courses: [
+        { id: "beginner", title: "Beginner", price: 15000, features: ["6 modules", "2 live classes/week"] },
+        { id: "intermediate", title: "Intermediate", price: 20000, features: ["6 modules", "2 live classes/week"] },
+        { id: "advanced", title: "Advanced", price: 25000, features: ["6 modules", "2 live classes/week"] },
+        { id: "kids-teens", title: "Kids & Teens", price: 30000, features: ["8 lessons", "2 live classes/week"] }
+      ]
+    };
+
+    function isConfigured() {
+      return PBT_CONFIG.firebase.apiKey && PBT_CONFIG.firebase.apiKey.indexOf("REPLACE") !== 0;
+    }
+
+    function formatPrice(n) {
+      return n.toLocaleString("fr-FR") + " XAF";
+    }
+
+    function toast(msg, type) {
+      var host = document.getElementById("toastHost");
+      if (!host) return;
+      var el = document.createElement("div");
+      el.className = "px-4 py-3 rounded-xl text-sm shadow-lg border " +
+        (type === "error" ? "bg-red-50 text-red-800 border-red-200" : "bg-green-50 text-green-800 border-green-200");
+      el.textContent = msg;
+      host.appendChild(el);
+      setTimeout(function () { el.remove(); }, 3500);
+    }
+
+    function switchTab(name) {
+      document.querySelectorAll(".tab-panel").forEach(function (p) { p.classList.add("hidden"); });
+      document.querySelectorAll(".tab-btn").forEach(function (b) {
+        b.classList.remove("border-brand-600", "text-brand-700", "dark:text-brand-300");
+        b.classList.add("border-transparent", "text-slate-500");
+      });
+      var panel = document.getElementById("tab-" + name);
+      if (panel) panel.classList.remove("hidden");
+      document.querySelectorAll(".tab-btn").forEach(function (b) {
+        if (b.getAttribute("data-tab") === name) {
+          b.classList.add("border-brand-600", "text-brand-700", "dark:text-brand-300");
+          b.classList.remove("border-transparent", "text-slate-500");
+        }
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      try {
+        if (localStorage.getItem("pbt_theme") === "dark") document.documentElement.classList.add("dark");
+      } catch (e) {}
+      document.getElementById("themeToggle").addEventListener("click", function () {
+        var dark = !document.documentElement.classList.contains("dark");
+        document.documentElement.classList.toggle("dark", dark);
+        try { localStorage.setItem("pbt_theme", dark ? "dark" : "light"); } catch (e) {}
+      });
+
+      if (!isConfigured()) {
+        document.getElementById("loading").textContent = "Firebase is not configured. Add your project keys to this page.";
+        return;
+      }
+      if (!firebase.apps.length) firebase.initializeApp(PBT_CONFIG.firebase);
+      var auth = firebase.auth();
+      var db = firebase.firestore();
+
+      document.querySelectorAll(".tab-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () { switchTab(btn.getAttribute("data-tab")); });
+      });
+      document.querySelectorAll("[data-tab-link]").forEach(function (btn) {
+        btn.addEventListener("click", function () { switchTab(btn.getAttribute("data-tab-link")); });
+      });
+
+      document.getElementById("logoutBtn").addEventListener("click", function () {
+        auth.signOut().then(function () { location.href = "index.html"; });
+      });
+
+      try {
+        var last = JSON.parse(localStorage.getItem("pbt_last_placement") || "null");
+        if (last && last.level) {
+          document.getElementById("statPlacement").textContent = last.level + " (" + last.pct + "%)";
+        }
+      } catch (e) {}
+
+      auth.onAuthStateChanged(function (user) {
+        if (!user) {
+          location.href = "login.html";
+          return;
+        }
+
+        document.getElementById("loading").classList.add("hidden");
+        document.getElementById("content").classList.remove("hidden");
+        document.getElementById("userName").textContent = user.displayName || user.email || "Student";
+        document.getElementById("statEmail").textContent = user.email || "—";
+        document.getElementById("profEmail").value = user.email || "";
+
+        if (!user.emailVerified) {
+          document.getElementById("verifyBanner").classList.remove("hidden");
+          document.getElementById("resendVerify").onclick = function () {
+            user.sendEmailVerification().then(function () {
+              toast("Verification email sent.", "success");
+            }).catch(function (e) { toast(e.message, "error"); });
+          };
+        }
+
+        db.collection("users").doc(user.uid).get().then(function (snap) {
+          if (snap.exists) {
+            var u = snap.data();
+            document.getElementById("profFirst").value = u.firstName || "";
+            document.getElementById("profLast").value = u.lastName || "";
+            if (u.preferredLang) document.getElementById("profLang").value = u.preferredLang;
+            if (u.firstName || u.lastName) {
+              document.getElementById("userName").textContent = ((u.firstName || "") + " " + (u.lastName || "")).trim();
+            }
+          }
+        }).catch(function () {});
+
+        document.getElementById("profileForm").addEventListener("submit", function (e) {
+          e.preventDefault();
+          var first = document.getElementById("profFirst").value.trim();
+          var last = document.getElementById("profLast").value.trim();
+          var lang = document.getElementById("profLang").value;
+          var saveBtn = e.target.querySelector('button[type="submit"]');
+          if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = "Saving…"; }
+          var display = (first + " " + last).trim();
+          db.collection("users").doc(user.uid).set({
+            firstName: first,
+            lastName: last,
+            preferredLang: lang,
+            email: (user.email || "").toLowerCase(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true }).then(function () {
+            return user.updateProfile({ displayName: display || user.displayName || "" });
+          }).then(function () {
+            document.getElementById("userName").textContent = display || user.email || "Student";
+            toast("Profile saved successfully.", "success");
+          }).catch(function (err) {
+            console.error(err);
+            toast(err.message || "Could not save profile. Check you are signed in.", "error");
+          }).finally(function () {
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = "Save profile"; }
+          });
+        });
+
+        db.collection("enrollments")
+          .where("uid", "==", user.uid)
+          .where("status", "==", "active")
+          .get()
+          .then(function (snap) {
+            var list = [];
+            snap.forEach(function (doc) { list.push(Object.assign({ id: doc.id }, doc.data())); });
+            document.getElementById("statCourses").textContent = list.length;
+
+            var myList = document.getElementById("myCoursesList");
+            var noC = document.getElementById("noCourses");
+            if (!list.length) {
+              myList.innerHTML = "";
+              noC.classList.remove("hidden");
+            } else {
+              noC.classList.add("hidden");
+              myList.innerHTML = list.map(function (e) {
+                var course = PBT_CONFIG.courses.find(function (c) { return c.id === e.courseId; });
+                var title = course ? course.title : e.courseId;
+                var exp = e.expiresAt && e.expiresAt.toDate ? e.expiresAt.toDate().toLocaleDateString() : "—";
+                var daysLeft = "";
+                if (e.expiresAt && e.expiresAt.toDate) {
+                  var d = Math.ceil((e.expiresAt.toDate() - new Date()) / 86400000);
+                  daysLeft = d > 0 ? d + " days left" : "Expired";
+                }
+                return '<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">' +
+                  '<div><h3 class="font-bold text-brand-900 dark:text-brand-100">' + title + '</h3>' +
+                  '<p class="text-xs text-slate-500">Expires ' + exp + (daysLeft ? ' · ' + daysLeft : '') + '</p></div>' +
+                  '<a href="https://meet.google.com/new" target="_blank" rel="noopener" class="text-sm bg-brand-700 text-white px-4 py-2 rounded-lg hover:bg-brand-800 text-center">Join class</a></div>';
+              }).join("");
+            }
+
+            var enrolledIds = list.map(function (e) { return e.courseId; });
+            var grid = document.getElementById("enrolGrid");
+            grid.innerHTML = PBT_CONFIG.courses.map(function (c) {
+              var already = enrolledIds.indexOf(c.id) >= 0;
+              return '<article class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5">' +
+                '<h3 class="font-bold text-brand-900 dark:text-brand-100">' + c.title + '</h3>' +
+                '<p class="text-2xl font-bold text-brand-800 dark:text-brand-200 my-2">' + formatPrice(c.price) + '</p>' +
+                '<ul class="text-sm text-slate-600 dark:text-slate-300 mb-4 space-y-1">' +
+                c.features.map(function (f) { return "<li>✓ " + f + "</li>"; }).join("") +
+                '</ul>' +
+                '<button type="button" data-course="' + c.id + '" ' + (already ? "disabled" : "") +
+                ' class="w-full py-2 rounded-lg text-sm font-semibold ' +
+                (already ? "bg-slate-100 text-slate-400 cursor-not-allowed dark:bg-slate-700" : "bg-accent text-brand-950 hover:bg-accent-dark") + '">' +
+                (already ? "Already enrolled" : "Request enrolment") + "</button></article>";
+            }).join("");
+
+            grid.querySelectorAll("[data-course]").forEach(function (btn) {
+              btn.addEventListener("click", function () {
+                if (btn.disabled) return;
+                var cid = btn.getAttribute("data-course");
+                var course = PBT_CONFIG.courses.find(function (c) { return c.id === cid; });
+                if (!course) return;
+                var pk = PBT_CONFIG.paystackPublicKey || "";
+                if (!pk || pk.indexOf("YOUR_KEY") >= 0 || pk.indexOf("pk_live_YOUR") === 0) {
+                  toast("Add your Paystack public key in PBT_CONFIG.paystackPublicKey on this page.", "error");
+                  return;
+                }
+                if (typeof PaystackPop === "undefined") {
+                  toast("Paystack script failed to load. Check your network.", "error");
+                  return;
+                }
+                btn.disabled = true;
+                var handler = PaystackPop.setup({
+                  key: pk,
+                  email: user.email,
+                  amount: course.price * 100,
+                  currency: "XAF",
+                  ref: "PBT_" + user.uid.slice(0, 8) + "_" + cid + "_" + Date.now(),
+                  metadata: {
+                    uid: user.uid,
+                    courseId: cid,
+                    custom_fields: [
+                      { display_name: "Course", variable_name: "courseId", value: cid },
+                      { display_name: "UID", variable_name: "uid", value: user.uid }
+                    ]
+                  },
+                  callback: function (response) {
+                    db.collection("payments").add({
+                      uid: user.uid,
+                      email: user.email || "",
+                      courseId: cid,
+                      amount: course.price,
+                      currency: "XAF",
+                      status: "pending",
+                      paystackRef: response.reference,
+                      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }).then(function () {
+                      toast("Payment received. Awaiting admin approval (or Pipedream).", "success");
+                      if (PBT_CONFIG.pipedreamWebhookUrl) {
+                        fetch(PBT_CONFIG.pipedreamWebhookUrl, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            event: "paystack_success",
+                            reference: response.reference,
+                            uid: user.uid,
+                            courseId: cid,
+                            amount: course.price
+                          })
+                        }).catch(function () {});
+                      }
+                      btn.textContent = "Pending approval";
+                    }).catch(function (err) {
+                      toast(err.message || "Could not record payment", "error");
+                      btn.disabled = false;
+                    });
+                  },
+                  onClose: function () {
+                    btn.disabled = false;
+                  }
+                });
+                handler.openIframe();
+              });
+            });
+
+            // Load lessons for enrolled courses
+            var mat = document.getElementById("materialsList");
+            if (!enrolledIds.length) {
+              mat.innerHTML = '<p class="text-slate-400">Enrol in a course to unlock materials.</p>';
+            } else {
+              var promises = enrolledIds.map(function (cid) {
+                return db.collection("lessons").where("courseId", "==", cid).limit(20).get()
+                  .then(function (s) {
+                    return s.docs.map(function (d) {
+                      var x = d.data();
+                      return { title: x.title || d.id, courseId: cid, url: x.url || x.link || null, order: x.order || 0 };
+                    });
+                  }).catch(function () { return []; });
+              });
+              Promise.all(promises).then(function (arrays) {
+                var all = [].concat.apply([], arrays);
+                all.sort(function (a, b) { return a.order - b.order; });
+                if (!all.length) {
+                  mat.innerHTML = '<p class="text-slate-400">No lesson materials published yet for your courses.</p>';
+                } else {
+                  mat.innerHTML = all.map(function (l) {
+                    var course = PBT_CONFIG.courses.find(function (c) { return c.id === l.courseId; });
+                    var label = (course ? course.title + " · " : "") + l.title;
+                    if (l.url) {
+                      return '<a href="' + l.url + '" target="_blank" rel="noopener" class="block p-3 rounded-lg border border-slate-200 dark:border-slate-600 hover:border-brand-400">' + label + ' →</a>';
+                    }
+                    return '<div class="p-3 rounded-lg border border-slate-200 dark:border-slate-600">' + label + '</div>';
+                  }).join("");
+                }
+              });
+            }
+          })
+          .catch(function (err) {
+            console.error(err);
+            document.getElementById("statCourses").textContent = "—";
+            document.getElementById("noCourses").classList.remove("hidden");
+            document.getElementById("noCourses").textContent = "Could not load enrolments. Check Firestore rules and that you are signed in.";
+          });
+
+        var enrollParam = new URLSearchParams(location.search).get("enroll");
+        if (enrollParam) switchTab("enrol");
+      });
+    });
+  </script>
+</body>
+</html>

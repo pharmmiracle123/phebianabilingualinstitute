@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Placement Test | PHEBIANA BILINGUAL INSTITUTE (PBT)</title>
+  <title>Placement Test | PHEBIANA BILINGUAL ACADEMY (PBA)</title>
   <meta name="theme-color" content="#0f766e" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f766e'/%3E%3Ctext x='32' y='42' font-size='22' font-family='system-ui,sans-serif' font-weight='700' text-anchor='middle' fill='%23f59e0b'%3EPBT%3C/text%3E%3C/svg%3E" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f766e'/%3E%3Ctext x='32' y='42' font-size='22' font-family='system-ui,sans-serif' font-weight='700' text-anchor='middle' fill='%23f59e0b'%3EPBA%3C/text%3E%3C/svg%3E" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -29,7 +29,7 @@
   <header class="bg-brand-950 text-white">
     <div class="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
       <a href="index.html" class="flex items-center gap-2 font-bold text-sm">
-        <span class="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-brand-950 text-xs font-black">PBT</span>
+        <span class="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-brand-950 text-xs font-black">PBA</span>
         Placement Test
       </a>
       <div class="flex items-center gap-3">
@@ -107,8 +107,8 @@
       },
       adminEmails: [
         "onyekamiracle08@gmail.com",
-        "admin2@example.com",
-        "admin3@example.com",
+        "capntanphilemon123@gmail.com",
+        "ngwanwophebe7@gmail.com",
         "admin4@example.com"
       ]
     };
@@ -326,9 +326,9 @@
         document.getElementById("scoreBar").style.width = "0%";
       });
       document.getElementById("shareBtn").addEventListener("click", function () {
-        var text = document.getElementById("resultLevel").textContent + " — " + document.getElementById("resultScore").textContent + " | PBT Placement Test";
+        var text = document.getElementById("resultLevel").textContent + " — " + document.getElementById("resultScore").textContent + " | PBA Placement Test";
         if (navigator.share) {
-          navigator.share({ title: "PBT Placement Result", text: text }).catch(function () {});
+          navigator.share({ title: "PBA Placement Result", text: text }).catch(function () {});
         } else if (navigator.clipboard) {
           navigator.clipboard.writeText(text).then(function () {
             alert("Result copied to clipboard!");

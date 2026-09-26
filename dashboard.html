@@ -15,78 +15,155 @@
           colors: {
             brand: { 50:'#f0fdfa', 100:'#ccfbf1', 500:'#14b8a6', 600:'#0d9488', 700:'#0f766e', 800:'#115e59', 900:'#134e4a', 950:'#042f2e' },
             accent: { DEFAULT:'#f59e0b', dark:'#d97706' }
+          },
+          keyframes: {
+            slidein: { '0%': { transform: 'translateX(120%)', opacity: 0 }, '100%': { transform: 'translateX(0)', opacity: 1 } },
+            popcard: { '0%': { transform: 'scale(.96)', opacity: 0 }, '100%': { transform: 'scale(1)', opacity: 1 } },
+            confetti: { '0%': { transform: 'translateY(0) rotate(0)', opacity: 1 }, '100%': { transform: 'translateY(340px) rotate(600deg)', opacity: 0 } }
+          },
+          animation: {
+            slidein: 'slidein .35s cubic-bezier(.16,1,.3,1)',
+            popcard: 'popcard .3s ease',
+            confetti: 'confetti 1.6s ease-in forwards'
           }
         }
       }
     }
   </script>
-  <style>[hidden]{display:none!important}</style>
+  <style>
+    [hidden]{display:none!important}
+    * { scrollbar-width: thin; }
+    :focus-visible { outline: 2px solid #f59e0b; outline-offset: 2px; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    }
+    .glass {
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .tab-underline {
+      position: relative;
+    }
+    .tab-underline::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; bottom: -1px;
+      height: 2px;
+      background: linear-gradient(90deg, #14b8a6, #f59e0b);
+      transform: scaleX(0);
+      transition: transform .25s ease;
+    }
+    .tab-underline.active::after { transform: scaleX(1); }
+    .course-card {
+      transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+    }
+    .course-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 24px -12px rgba(15,118,110,.35);
+      border-color: #0d9488;
+    }
+    .skeleton {
+      background: linear-gradient(90deg, rgba(148,163,184,.15) 25%, rgba(148,163,184,.3) 37%, rgba(148,163,184,.15) 63%);
+      background-size: 400% 100%;
+      animation: shimmer 1.4s ease infinite;
+    }
+    @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+    .confetti-piece { position: fixed; top: -10px; width: 8px; height: 14px; z-index: 200; pointer-events: none; }
+  </style>
   <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
   <script src="https://js.paystack.co/v1/inline.js"></script>
 </head>
-<body class="bg-slate-50 min-h-screen dark:bg-slate-900 transition-colors">
+<body class="bg-slate-50 min-h-screen dark:bg-slate-900 text-slate-800 dark:text-slate-100 transition-colors duration-300">
   <div id="toastHost" class="fixed bottom-4 right-4 z-[100] space-y-2 max-w-sm"></div>
-  <header class="bg-brand-950 text-white sticky top-0 z-40">
+  <div id="confettiHost" class="fixed inset-0 overflow-hidden pointer-events-none z-[150]"></div>
+
+  <header class="bg-brand-950 text-white sticky top-0 z-40 shadow-lg shadow-brand-950/20">
     <div class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-      <a href="index.html" class="flex items-center gap-2 font-bold text-sm">
-        <span class="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-brand-950 text-xs font-black">PBA</span>
+      <a href="index.html" class="flex items-center gap-2 font-bold text-sm group">
+        <span class="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-brand-950 text-xs font-black group-hover:rotate-6 transition-transform">PBA</span>
         <span class="hidden sm:inline">Dashboard</span>
       </a>
       <div class="flex items-center gap-3 text-sm">
-        <button type="button" id="themeToggle" class="text-brand-200 hover:text-white p-1" aria-label="Theme">◐</button>
+        <button type="button" id="themeToggle" class="relative w-9 h-9 rounded-full flex items-center justify-center text-brand-100 hover:bg-white/10 transition-colors" aria-label="Toggle theme">
+          <span id="themeIconSun" class="text-base">☀️</span>
+          <span id="themeIconMoon" class="text-base hidden">🌙</span>
+        </button>
         <span id="userName" class="text-brand-200"></span>
-        <button type="button" id="logoutBtn" class="text-brand-200 hover:text-white px-2 py-1">Log out</button>
+        <button type="button" id="logoutBtn" class="text-brand-200 hover:text-white px-2 py-1 rounded-lg hover:bg-white/5 transition-colors">Log out</button>
       </div>
     </div>
   </header>
 
   <main class="max-w-5xl mx-auto px-4 py-8">
-    <div id="loading" class="text-center py-16 text-slate-500">Loading your account…</div>
+    <div id="loading" class="py-10 space-y-4">
+      <div class="skeleton h-8 w-60 rounded-lg"></div>
+      <div class="skeleton h-4 w-80 rounded-lg"></div>
+      <div class="grid sm:grid-cols-3 gap-4 mt-6">
+        <div class="skeleton h-24 rounded-xl"></div>
+        <div class="skeleton h-24 rounded-xl"></div>
+        <div class="skeleton h-24 rounded-xl"></div>
+      </div>
+    </div>
+
     <div id="content" class="hidden">
-      <div class="mb-8">
-        <h1 class="text-2xl font-bold text-brand-900 dark:text-brand-100">Welcome back</h1>
-        <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Your learning hub at PHEBIANA BILINGUAL ACADEMY</p>
-        <p id="verifyBanner" class="hidden mt-3 text-sm bg-amber-50 text-amber-900 border border-amber-200 rounded-lg px-4 py-2 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-800">
+      <div class="mb-8 relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-800 via-brand-700 to-brand-900 text-white p-6 sm:p-8 shadow-xl">
+        <div class="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-accent/20 blur-2xl"></div>
+        <div class="absolute -left-6 -bottom-10 w-32 h-32 rounded-full bg-brand-300/10 blur-2xl"></div>
+        <div class="relative">
+          <h1 class="text-2xl sm:text-3xl font-bold">Welcome back<span id="welcomeName"></span></h1>
+          <p class="text-brand-100 text-sm mt-1">Your learning hub at PHEBIANA BILINGUAL ACADEMY</p>
+        </div>
+        <p id="verifyBanner" class="hidden mt-4 relative text-sm bg-amber-50/95 text-amber-900 border border-amber-200 rounded-xl px-4 py-2">
           Please verify your email. Check your inbox (and spam). <button type="button" id="resendVerify" class="underline font-semibold">Resend verification</button>
         </p>
       </div>
 
-      <div class="flex gap-2 border-b border-slate-200 dark:border-slate-700 mb-6 overflow-x-auto">
-        <button type="button" data-tab="overview" class="tab-btn px-4 py-2 text-sm font-semibold border-b-2 border-brand-600 text-brand-700 dark:text-brand-300">Overview</button>
-        <button type="button" data-tab="courses" class="tab-btn px-4 py-2 text-sm font-medium text-slate-500 hover:text-brand-700 border-b-2 border-transparent">My courses</button>
-        <button type="button" data-tab="enrol" class="tab-btn px-4 py-2 text-sm font-medium text-slate-500 hover:text-brand-700 border-b-2 border-transparent">Enrol</button>
-        <button type="button" data-tab="materials" class="tab-btn px-4 py-2 text-sm font-medium text-slate-500 hover:text-brand-700 border-b-2 border-transparent">Materials</button>
-        <button type="button" data-tab="profile" class="tab-btn px-4 py-2 text-sm font-medium text-slate-500 hover:text-brand-700 border-b-2 border-transparent">Profile</button>
+      <div class="flex gap-1 border-b border-slate-200 dark:border-slate-700 mb-6 overflow-x-auto">
+        <button type="button" data-tab="overview" class="tab-btn tab-underline active px-4 py-2 text-sm font-semibold text-brand-700 dark:text-brand-300">Overview</button>
+        <button type="button" data-tab="courses" class="tab-btn tab-underline px-4 py-2 text-sm font-medium text-slate-500 hover:text-brand-700 dark:hover:text-brand-300">My courses</button>
+        <button type="button" data-tab="enrol" class="tab-btn tab-underline px-4 py-2 text-sm font-medium text-slate-500 hover:text-brand-700 dark:hover:text-brand-300">Enrol</button>
+        <button type="button" data-tab="materials" class="tab-btn tab-underline px-4 py-2 text-sm font-medium text-slate-500 hover:text-brand-700 dark:hover:text-brand-300">Materials</button>
+        <button type="button" data-tab="profile" class="tab-btn tab-underline px-4 py-2 text-sm font-medium text-slate-500 hover:text-brand-700 dark:hover:text-brand-300">Profile</button>
       </div>
 
       <section id="tab-overview" class="tab-panel space-y-6">
         <div class="grid sm:grid-cols-3 gap-4">
-          <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
+          <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 hover:shadow-md transition-shadow">
             <p class="text-xs text-slate-500 uppercase tracking-wide">Active enrolments</p>
             <p id="statCourses" class="text-3xl font-bold text-brand-800 dark:text-brand-200 mt-1">0</p>
           </div>
-          <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
+          <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 hover:shadow-md transition-shadow">
             <p class="text-xs text-slate-500 uppercase tracking-wide">Account</p>
             <p id="statEmail" class="text-sm font-medium text-brand-800 dark:text-brand-200 mt-2 truncate">—</p>
           </div>
-          <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
+          <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 hover:shadow-md transition-shadow">
             <p class="text-xs text-slate-500 uppercase tracking-wide">Last placement</p>
             <p id="statPlacement" class="text-sm font-medium text-brand-800 dark:text-brand-200 mt-2">—</p>
           </div>
         </div>
+
         <div class="bg-brand-50 dark:bg-brand-950 border border-brand-100 dark:border-brand-800 rounded-xl p-5">
           <h3 class="font-semibold text-brand-900 dark:text-brand-100 mb-2">Quick actions</h3>
           <div class="flex flex-wrap gap-2">
-            <a href="placement.html" class="text-sm bg-white dark:bg-slate-800 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-200 px-4 py-2 rounded-lg hover:bg-brand-100">Placement test</a>
-            <button type="button" data-tab-link="enrol" class="text-sm bg-accent text-brand-950 font-semibold px-4 py-2 rounded-lg hover:bg-accent-dark">Enrol in a course</button>
-            <button type="button" data-tab-link="profile" class="text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 px-4 py-2 rounded-lg">Edit profile</button>
+            <a href="placement.html" class="text-sm bg-white dark:bg-slate-800 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-200 px-4 py-2 rounded-lg hover:bg-brand-100 dark:hover:bg-slate-700 transition-colors">Placement test</a>
+            <button type="button" data-tab-link="enrol" class="text-sm bg-accent text-brand-950 font-semibold px-4 py-2 rounded-lg hover:bg-accent-dark transition-colors">Enrol in a course</button>
+            <button type="button" data-tab-link="profile" class="text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 px-4 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Edit profile</button>
           </div>
         </div>
+
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 flex items-start gap-3">
+          <span class="text-xl leading-none">💡</span>
+          <div>
+            <h3 class="font-semibold text-brand-900 dark:text-brand-100 mb-1">Tip of the day</h3>
+            <p id="tipOfDay" class="text-sm text-slate-600 dark:text-slate-300 transition-opacity duration-500"></p>
+          </div>
+        </div>
+
         <div id="upcomingClasses" class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
           <h3 class="font-semibold text-brand-900 dark:text-brand-100 mb-3">Live class tips</h3>
-          <p class="text-sm text-slate-600 dark:text-slate-300">Join via the “Join class” button on each enrolled course. Classes run 2× per week on Google Meet. Arrive 5 minutes early with headphones and a quiet space.</p>
+          <p class="text-sm text-slate-600 dark:text-slate-300">Join via the "Join class" button on each enrolled course. Classes run 2× per week on Google Meet. Arrive 5 minutes early with headphones and a quiet space.</p>
         </div>
       </section>
 
@@ -117,11 +194,11 @@
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">First name</label>
-                <input type="text" id="profFirst" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-xl px-3 py-2 text-sm" />
+                <input type="text" id="profFirst" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" />
               </div>
               <div>
                 <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Last name</label>
-                <input type="text" id="profLast" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-xl px-3 py-2 text-sm" />
+                <input type="text" id="profLast" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" />
               </div>
             </div>
             <div>
@@ -130,12 +207,12 @@
             </div>
             <div>
               <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Preferred language</label>
-              <select id="profLang" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-xl px-3 py-2 text-sm">
+              <select id="profLang" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition">
                 <option value="en">English</option>
                 <option value="fr">Français</option>
               </select>
             </div>
-            <button type="submit" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-2 rounded-xl text-sm">Save profile</button>
+            <button type="submit" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-2 rounded-xl text-sm transition-colors">Save profile</button>
           </form>
         </div>
       </section>
@@ -167,6 +244,8 @@
       },
       pipedreamWebhookUrl: "",
       enrolmentDays: 30,
+      /* NOTE: prices below are in NAIRA (NGN) now — review these figures, they
+         were previously labelled as XAF and are not a 1:1 currency swap. */
       courses: [
         { id: "beginner", title: "Beginner", price: 15000, features: ["6 modules", "2 live classes/week"] },
         { id: "intermediate", title: "Intermediate", price: 20000, features: ["6 modules", "2 live classes/week"] },
@@ -175,53 +254,128 @@
       ]
     };
 
+    const LEARNING_TIPS = [
+      "Practice speaking out loud for 10 minutes daily, even alone.",
+      "Watch a French video with subtitles once a week to train your ear.",
+      "Review yesterday's vocabulary before starting a new lesson.",
+      "Don't fear mistakes — they're proof you're actually practicing.",
+      "Keep a small notebook of new words and revisit it every Sunday.",
+      "Say tomorrow's date out loud in French before bed tonight.",
+      "Rename five things around your room with their French names."
+    ];
+
     function isConfigured() {
       return PBT_CONFIG.firebase.apiKey && PBT_CONFIG.firebase.apiKey.indexOf("REPLACE") !== 0;
     }
 
     function formatPrice(n) {
-      return n.toLocaleString("fr-FR") + " XAF";
+      return "₦" + n.toLocaleString("en-NG");
     }
 
     function toast(msg, type) {
       var host = document.getElementById("toastHost");
       if (!host) return;
+      var icon = type === "error" ? "⚠️" : "✅";
       var el = document.createElement("div");
-      el.className = "px-4 py-3 rounded-xl text-sm shadow-lg border " +
-        (type === "error" ? "bg-red-50 text-red-800 border-red-200" : "bg-green-50 text-green-800 border-green-200");
-      el.textContent = msg;
+      el.className = "animate-slidein px-4 py-3 rounded-xl text-sm shadow-lg border flex items-center gap-2 " +
+        (type === "error"
+          ? "bg-red-50 text-red-800 border-red-200 dark:bg-red-950 dark:text-red-200 dark:border-red-800"
+          : "bg-green-50 text-green-800 border-green-200 dark:bg-green-950 dark:text-green-200 dark:border-green-800");
+      el.innerHTML = '<span>' + icon + '</span><span>' + msg + '</span>';
       host.appendChild(el);
-      setTimeout(function () { el.remove(); }, 3500);
+      setTimeout(function () {
+        el.style.transition = "opacity .3s ease";
+        el.style.opacity = 0;
+        setTimeout(function () { el.remove(); }, 300);
+      }, 3500);
+    }
+
+    function animateCount(el, target, duration) {
+      duration = duration || 700;
+      var startTime = null;
+      function step(ts) {
+        if (!startTime) startTime = ts;
+        var progress = Math.min((ts - startTime) / duration, 1);
+        el.textContent = Math.floor(progress * target);
+        if (progress < 1) requestAnimationFrame(step);
+        else el.textContent = target;
+      }
+      requestAnimationFrame(step);
+    }
+
+    function showDailyTip() {
+      var el = document.getElementById("tipOfDay");
+      if (!el) return;
+      var idx = new Date().getDate() % LEARNING_TIPS.length;
+      el.style.opacity = 0;
+      setTimeout(function () {
+        el.textContent = LEARNING_TIPS[idx];
+        el.style.opacity = 1;
+      }, 200);
+    }
+
+    function launchConfetti() {
+      var host = document.getElementById("confettiHost");
+      if (!host) return;
+      var colors = ["#14b8a6", "#f59e0b", "#0f766e", "#fbbf24", "#2dd4bf"];
+      for (var i = 0; i < 28; i++) {
+        (function () {
+          var piece = document.createElement("div");
+          piece.className = "confetti-piece animate-confetti";
+          piece.style.left = Math.random() * 100 + "vw";
+          piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+          piece.style.animationDelay = (Math.random() * 0.3) + "s";
+          piece.style.borderRadius = Math.random() > 0.5 ? "50%" : "2px";
+          host.appendChild(piece);
+          setTimeout(function () { piece.remove(); }, 2200);
+        })();
+      }
     }
 
     function switchTab(name) {
       document.querySelectorAll(".tab-panel").forEach(function (p) { p.classList.add("hidden"); });
       document.querySelectorAll(".tab-btn").forEach(function (b) {
-        b.classList.remove("border-brand-600", "text-brand-700", "dark:text-brand-300");
-        b.classList.add("border-transparent", "text-slate-500");
+        b.classList.remove("active", "text-brand-700", "dark:text-brand-300");
+        b.classList.add("text-slate-500");
       });
       var panel = document.getElementById("tab-" + name);
-      if (panel) panel.classList.remove("hidden");
+      if (panel) {
+        panel.classList.remove("hidden");
+        panel.style.opacity = 0;
+        panel.style.transform = "translateY(6px)";
+        requestAnimationFrame(function () {
+          panel.style.transition = "opacity .25s ease, transform .25s ease";
+          panel.style.opacity = 1;
+          panel.style.transform = "translateY(0)";
+        });
+      }
       document.querySelectorAll(".tab-btn").forEach(function (b) {
         if (b.getAttribute("data-tab") === name) {
-          b.classList.add("border-brand-600", "text-brand-700", "dark:text-brand-300");
-          b.classList.remove("border-transparent", "text-slate-500");
+          b.classList.add("active", "text-brand-700", "dark:text-brand-300");
+          b.classList.remove("text-slate-500");
         }
       });
     }
 
+    function setTheme(dark) {
+      document.documentElement.classList.toggle("dark", dark);
+      document.getElementById("themeIconSun").classList.toggle("hidden", dark);
+      document.getElementById("themeIconMoon").classList.toggle("hidden", !dark);
+      try { localStorage.setItem("pbt_theme", dark ? "dark" : "light"); } catch (e) {}
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
-      try {
-        if (localStorage.getItem("pbt_theme") === "dark") document.documentElement.classList.add("dark");
-      } catch (e) {}
+      var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      var savedTheme = null;
+      try { savedTheme = localStorage.getItem("pbt_theme"); } catch (e) {}
+      setTheme(savedTheme ? savedTheme === "dark" : prefersDark);
+
       document.getElementById("themeToggle").addEventListener("click", function () {
-        var dark = !document.documentElement.classList.contains("dark");
-        document.documentElement.classList.toggle("dark", dark);
-        try { localStorage.setItem("pbt_theme", dark ? "dark" : "light"); } catch (e) {}
+        setTheme(!document.documentElement.classList.contains("dark"));
       });
 
       if (!isConfigured()) {
-        document.getElementById("loading").textContent = "Firebase is not configured. Add your project keys to this page.";
+        document.getElementById("loading").innerHTML = '<p class="text-slate-500">Firebase is not configured. Add your project keys to this page.</p>';
         return;
       }
       if (!firebase.apps.length) firebase.initializeApp(PBT_CONFIG.firebase);
@@ -254,9 +408,12 @@
 
         document.getElementById("loading").classList.add("hidden");
         document.getElementById("content").classList.remove("hidden");
+        var firstNameOnly = (user.displayName || "").split(" ")[0];
         document.getElementById("userName").textContent = user.displayName || user.email || "Student";
+        document.getElementById("welcomeName").textContent = firstNameOnly ? ", " + firstNameOnly : "";
         document.getElementById("statEmail").textContent = user.email || "—";
         document.getElementById("profEmail").value = user.email || "";
+        showDailyTip();
 
         if (!user.emailVerified) {
           document.getElementById("verifyBanner").classList.remove("hidden");
@@ -274,7 +431,9 @@
             document.getElementById("profLast").value = u.lastName || "";
             if (u.preferredLang) document.getElementById("profLang").value = u.preferredLang;
             if (u.firstName || u.lastName) {
-              document.getElementById("userName").textContent = ((u.firstName || "") + " " + (u.lastName || "")).trim();
+              var full = ((u.firstName || "") + " " + (u.lastName || "")).trim();
+              document.getElementById("userName").textContent = full;
+              document.getElementById("welcomeName").textContent = u.firstName ? ", " + u.firstName : "";
             }
           }
         }).catch(function () {});
@@ -297,6 +456,7 @@
             return user.updateProfile({ displayName: display || user.displayName || "" });
           }).then(function () {
             document.getElementById("userName").textContent = display || user.email || "Student";
+            document.getElementById("welcomeName").textContent = first ? ", " + first : "";
             toast("Profile saved successfully.", "success");
           }).catch(function (err) {
             console.error(err);
@@ -313,7 +473,7 @@
           .then(function (snap) {
             var list = [];
             snap.forEach(function (doc) { list.push(Object.assign({ id: doc.id }, doc.data())); });
-            document.getElementById("statCourses").textContent = list.length;
+            animateCount(document.getElementById("statCourses"), list.length);
 
             var myList = document.getElementById("myCoursesList");
             var noC = document.getElementById("noCourses");
@@ -331,10 +491,10 @@
                   var d = Math.ceil((e.expiresAt.toDate() - new Date()) / 86400000);
                   daysLeft = d > 0 ? d + " days left" : "Expired";
                 }
-                return '<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">' +
+                return '<div class="animate-popcard bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">' +
                   '<div><h3 class="font-bold text-brand-900 dark:text-brand-100">' + title + '</h3>' +
                   '<p class="text-xs text-slate-500">Expires ' + exp + (daysLeft ? ' · ' + daysLeft : '') + '</p></div>' +
-                  '<a href="https://meet.google.com/new" target="_blank" rel="noopener" class="text-sm bg-brand-700 text-white px-4 py-2 rounded-lg hover:bg-brand-800 text-center">Join class</a></div>';
+                  '<a href="https://meet.google.com/new" target="_blank" rel="noopener" class="text-sm bg-brand-700 text-white px-4 py-2 rounded-lg hover:bg-brand-800 transition-colors text-center">Join class</a></div>';
               }).join("");
             }
 
@@ -342,14 +502,14 @@
             var grid = document.getElementById("enrolGrid");
             grid.innerHTML = PBT_CONFIG.courses.map(function (c) {
               var already = enrolledIds.indexOf(c.id) >= 0;
-              return '<article class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5">' +
+              return '<article class="course-card bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5">' +
                 '<h3 class="font-bold text-brand-900 dark:text-brand-100">' + c.title + '</h3>' +
                 '<p class="text-2xl font-bold text-brand-800 dark:text-brand-200 my-2">' + formatPrice(c.price) + '</p>' +
                 '<ul class="text-sm text-slate-600 dark:text-slate-300 mb-4 space-y-1">' +
                 c.features.map(function (f) { return "<li>✓ " + f + "</li>"; }).join("") +
                 '</ul>' +
                 '<button type="button" data-course="' + c.id + '" ' + (already ? "disabled" : "") +
-                ' class="w-full py-2 rounded-lg text-sm font-semibold ' +
+                ' class="w-full py-2 rounded-lg text-sm font-semibold transition-colors ' +
                 (already ? "bg-slate-100 text-slate-400 cursor-not-allowed dark:bg-slate-700" : "bg-accent text-brand-950 hover:bg-accent-dark") + '">' +
                 (already ? "Already enrolled" : "Request enrolment") + "</button></article>";
             }).join("");
@@ -374,7 +534,7 @@
                   key: pk,
                   email: user.email,
                   amount: course.price * 100,
-                  currency: "XAF",
+                  currency: "NGN",
                   ref: "PBT_" + user.uid.slice(0, 8) + "_" + cid + "_" + Date.now(),
                   metadata: {
                     uid: user.uid,
@@ -390,12 +550,13 @@
                       email: user.email || "",
                       courseId: cid,
                       amount: course.price,
-                      currency: "XAF",
+                      currency: "NGN",
                       status: "pending",
                       paystackRef: response.reference,
                       createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     }).then(function () {
-                      toast("Payment received. Awaiting admin approval (or Pipedream).", "success");
+                      toast("Payment received. Awaiting admin approval.", "success");
+                      launchConfetti();
                       if (PBT_CONFIG.pipedreamWebhookUrl) {
                         fetch(PBT_CONFIG.pipedreamWebhookUrl, {
                           method: "POST",
@@ -423,7 +584,6 @@
               });
             });
 
-            // Load lessons for enrolled courses
             var mat = document.getElementById("materialsList");
             if (!enrolledIds.length) {
               mat.innerHTML = '<p class="text-slate-400">Enrol in a course to unlock materials.</p>';
@@ -447,7 +607,7 @@
                     var course = PBT_CONFIG.courses.find(function (c) { return c.id === l.courseId; });
                     var label = (course ? course.title + " · " : "") + l.title;
                     if (l.url) {
-                      return '<a href="' + l.url + '" target="_blank" rel="noopener" class="block p-3 rounded-lg border border-slate-200 dark:border-slate-600 hover:border-brand-400">' + label + ' →</a>';
+                      return '<a href="' + l.url + '" target="_blank" rel="noopener" class="block p-3 rounded-lg border border-slate-200 dark:border-slate-600 hover:border-brand-400 transition-colors">' + label + ' →</a>';
                     }
                     return '<div class="p-3 rounded-lg border border-slate-200 dark:border-slate-600">' + label + '</div>';
                   }).join("");

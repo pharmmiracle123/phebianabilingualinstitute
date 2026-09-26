@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin | PHEBIANA BILINGUAL INSTITUTE (PBT)</title>
+  <title>Admin | PHEBIANA BILINGUAL ACADEMY (PBA)</title>
   <meta name="theme-color" content="#0f766e" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f766e'/%3E%3Ctext x='32' y='42' font-size='22' font-family='system-ui,sans-serif' font-weight='700' text-anchor='middle' fill='%23f59e0b'%3EPBT%3C/text%3E%3C/svg%3E" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f766e'/%3E%3Ctext x='32' y='42' font-size='22' font-family='system-ui,sans-serif' font-weight='700' text-anchor='middle' fill='%23f59e0b'%3EPBA%3C/text%3E%3C/svg%3E" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -13,8 +13,18 @@
       theme: {
         extend: {
           colors: {
-            brand: { 50:'#f0fdfa', 500:'#14b8a6', 600:'#0d9488', 700:'#0f766e', 800:'#115e59', 900:'#134e4a', 950:'#042f2e' },
+            brand: { 50:'#f0fdfa', 100:'#ccfbf1', 500:'#14b8a6', 600:'#0d9488', 700:'#0f766e', 800:'#115e59', 900:'#134e4a', 950:'#042f2e' },
             accent: { DEFAULT:'#f59e0b', dark:'#d97706' }
+          },
+          keyframes: {
+            slidein: { '0%': { transform: 'translateX(120%)', opacity: 0 }, '100%': { transform: 'translateX(0)', opacity: 1 } },
+            popcard: { '0%': { transform: 'scale(.96)', opacity: 0 }, '100%': { transform: 'scale(1)', opacity: 1 } },
+            pulseGlow: { '0%,100%': { boxShadow: '0 0 0 0 rgba(245,158,11,.4)' }, '50%': { boxShadow: '0 0 0 6px rgba(245,158,11,0)' } }
+          },
+          animation: {
+            slidein: 'slidein .3s cubic-bezier(.16,1,.3,1)',
+            popcard: 'popcard .25s ease',
+            pulseGlow: 'pulseGlow 2s ease infinite'
           }
         }
       }
@@ -22,27 +32,52 @@
   </script>
   <style>
     [hidden]{display:none!important}
-    .toast{animation:toastIn .25s ease-out}
-    @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    * { scrollbar-width: thin; }
+    :focus-visible { outline: 2px solid #f59e0b; outline-offset: 2px; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    }
+    .admin-tab { position: relative; transition: color .2s ease; }
+    .admin-tab::after {
+      content: '';
+      position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+      background: linear-gradient(90deg, #14b8a6, #f59e0b);
+      transform: scaleX(0);
+      transition: transform .25s ease;
+    }
+    .admin-tab.active::after { transform: scaleX(1); }
+    .stat-card { transition: transform .2s ease, box-shadow .2s ease; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -12px rgba(15,118,110,.3); }
+    .row-flash { animation: rowFlash 1s ease; }
+    @keyframes rowFlash { 0% { background-color: rgba(20,184,166,.15); } 100% { background-color: transparent; } }
+    .skeleton {
+      background: linear-gradient(90deg, rgba(148,163,184,.15) 25%, rgba(148,163,184,.3) 37%, rgba(148,163,184,.15) 63%);
+      background-size: 400% 100%;
+      animation: shimmer 1.4s ease infinite;
+    }
+    @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
   </style>
   <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
   <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
 </head>
-<body class="bg-slate-50 min-h-screen dark:bg-slate-900 transition-colors">
+<body class="bg-slate-50 min-h-screen dark:bg-slate-900 text-slate-800 dark:text-slate-100 transition-colors duration-300">
   <div id="toastHost" class="fixed bottom-4 right-4 z-[100] space-y-2 max-w-sm"></div>
 
-  <header class="bg-brand-950 text-white sticky top-0 z-40">
+  <header class="bg-brand-950 text-white sticky top-0 z-40 shadow-lg shadow-brand-950/20">
     <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-      <a href="index.html" class="flex items-center gap-2 font-bold text-sm">
-        <span class="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-brand-950 text-xs font-black">PBT</span>
+      <a href="index.html" class="flex items-center gap-2 font-bold text-sm group">
+        <span class="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-brand-950 text-xs font-black group-hover:rotate-6 transition-transform">PBA</span>
         Admin Panel
       </a>
       <div class="flex items-center gap-3">
-        <button type="button" id="themeToggle" class="text-brand-200 hover:text-white p-1" aria-label="Theme">◐</button>
-        <a href="dashboard.html" class="text-brand-200 text-sm hover:text-white hidden sm:inline">Dashboard</a>
-        <button type="button" id="logoutBtn" class="text-brand-200 text-sm hover:text-white">Log out</button>
+        <button type="button" id="themeToggle" class="relative w-9 h-9 rounded-full flex items-center justify-center text-brand-100 hover:bg-white/10 transition-colors" aria-label="Toggle theme">
+          <span id="themeIconSun" class="text-base">☀️</span>
+          <span id="themeIconMoon" class="text-base hidden">🌙</span>
+        </button>
+        <a href="dashboard.html" class="text-brand-200 text-sm hover:text-white hidden sm:inline transition-colors">Dashboard</a>
+        <button type="button" id="logoutBtn" class="text-brand-200 text-sm hover:text-white px-2 py-1 rounded-lg hover:bg-white/5 transition-colors">Log out</button>
       </div>
     </div>
   </header>
@@ -52,44 +87,48 @@
       <h1 class="text-xl font-bold text-brand-900 dark:text-brand-100 mb-2">Checking admin access…</h1>
       <p class="text-sm text-slate-500">You must sign in with a verified admin email.</p>
       <p id="gateMsg" class="text-sm text-red-600 mt-4 hidden"></p>
-      <a href="login.html" class="inline-block mt-4 text-brand-700 font-semibold underline">Go to login</a>
+      <a href="login.html" class="inline-block mt-4 text-brand-700 dark:text-brand-300 font-semibold underline">Go to login</a>
     </div>
 
     <div id="panel" class="hidden space-y-6">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 class="text-2xl font-bold text-brand-900 dark:text-brand-100">PBT Admin</h1>
-          <p class="text-sm text-slate-500">Signed in as <span id="adminEmail" class="font-medium text-brand-800 dark:text-brand-200"></span></p>
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-800 via-brand-700 to-brand-900 text-white p-6 sm:p-7 shadow-xl">
+        <div class="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-accent/20 blur-2xl"></div>
+        <div class="absolute -left-6 -bottom-10 w-32 h-32 rounded-full bg-brand-300/10 blur-2xl"></div>
+        <div class="relative flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 class="text-2xl font-bold">PBA Admin</h1>
+            <p class="text-sm text-brand-100">Signed in as <span id="adminEmail" class="font-medium text-white"></span></p>
+          </div>
         </div>
       </div>
 
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+        <div class="stat-card bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
           <p class="text-xs text-slate-500 uppercase">Users</p>
           <p id="statUsers" class="text-2xl font-bold text-brand-800 dark:text-brand-200 mt-1">—</p>
         </div>
-        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+        <div class="stat-card bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
           <p class="text-xs text-slate-500 uppercase">Enrolments</p>
           <p id="statEnrol" class="text-2xl font-bold text-brand-800 dark:text-brand-200 mt-1">—</p>
         </div>
-        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+        <div class="stat-card bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
           <p class="text-xs text-slate-500 uppercase">Pending payments</p>
           <p id="statPending" class="text-2xl font-bold text-amber-600 mt-1">—</p>
         </div>
-        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+        <div class="stat-card bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
           <p class="text-xs text-slate-500 uppercase">Placement results</p>
           <p id="statPlace" class="text-2xl font-bold text-brand-800 dark:text-brand-200 mt-1">—</p>
         </div>
       </div>
 
       <div class="flex gap-1 overflow-x-auto border-b border-slate-200 dark:border-slate-700 pb-px">
-        <button type="button" data-tab="payments" class="admin-tab shrink-0 px-4 py-2 text-sm font-semibold border-b-2 border-brand-600 text-brand-700 dark:text-brand-300">Payments</button>
-        <button type="button" data-tab="students" class="admin-tab shrink-0 px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent">Students</button>
-        <button type="button" data-tab="enrolments" class="admin-tab shrink-0 px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent">Enrolments</button>
-        <button type="button" data-tab="questions" class="admin-tab shrink-0 px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent">Placement Qs</button>
-        <button type="button" data-tab="lessons" class="admin-tab shrink-0 px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent">Lessons &amp; Media</button>
-        <button type="button" data-tab="placements" class="admin-tab shrink-0 px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent">Results</button>
-        <button type="button" data-tab="settings" class="admin-tab shrink-0 px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent">Settings</button>
+        <button type="button" data-tab="payments" class="admin-tab active shrink-0 px-4 py-2 text-sm font-semibold text-brand-700 dark:text-brand-300">Payments</button>
+        <button type="button" data-tab="students" class="admin-tab shrink-0 px-4 py-2 text-sm font-medium text-slate-500 hover:text-brand-700 dark:hover:text-brand-300">Students</button>
+        <button type="button" data-tab="enrolments" class="admin-tab shrink-0 px-4 py-2 text-sm font-medium text-slate-500 hover:text-brand-700 dark:hover:text-brand-300">Enrolments</button>
+        <button type="button" data-tab="questions" class="admin-tab shrink-0 px-4 py-2 text-sm font-medium text-slate-500 hover:text-brand-700 dark:hover:text-brand-300">Placement Qs</button>
+        <button type="button" data-tab="lessons" class="admin-tab shrink-0 px-4 py-2 text-sm font-medium text-slate-500 hover:text-brand-700 dark:hover:text-brand-300">Lessons &amp; Media</button>
+        <button type="button" data-tab="placements" class="admin-tab shrink-0 px-4 py-2 text-sm font-medium text-slate-500 hover:text-brand-700 dark:hover:text-brand-300">Results</button>
+        <button type="button" data-tab="settings" class="admin-tab shrink-0 px-4 py-2 text-sm font-medium text-slate-500 hover:text-brand-700 dark:hover:text-brand-300">Settings</button>
       </div>
 
       <!-- PAYMENTS -->
@@ -97,12 +136,12 @@
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h2 class="font-bold text-brand-900 dark:text-brand-100">Payment approvals</h2>
           <div class="flex gap-2 text-sm">
-            <button type="button" data-pay-filter="pending" class="pay-filter px-3 py-1 rounded-lg bg-amber-100 text-amber-900 font-medium">Pending</button>
-            <button type="button" data-pay-filter="approved" class="pay-filter px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600">Approved</button>
-            <button type="button" data-pay-filter="all" class="pay-filter px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600">All</button>
+            <button type="button" data-pay-filter="pending" class="pay-filter px-3 py-1 rounded-lg bg-amber-100 text-amber-900 font-medium transition-colors animate-pulseGlow">Pending</button>
+            <button type="button" data-pay-filter="approved" class="pay-filter px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors">Approved</button>
+            <button type="button" data-pay-filter="all" class="pay-filter px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors">All</button>
           </div>
         </div>
-        <p class="text-xs text-slate-500">After Paystack (or Pipedream webhook) records a payment as <code>pending</code>, approve here to create a 30-day enrolment. Pipedream can also approve via Admin SDK.</p>
+        <p class="text-xs text-slate-500">After Paystack (or Pipedream webhook) records a payment as <code class="bg-slate-100 dark:bg-slate-700 px-1 rounded">pending</code>, approve here to create a 30-day enrolment. Pipedream can also approve via Admin SDK.</p>
         <div id="paymentsList" class="space-y-2"></div>
         <p id="noPayments" class="text-slate-400 text-sm hidden">No payments in this filter.</p>
 
@@ -111,18 +150,18 @@
           <form id="manualEnrolForm" class="grid sm:grid-cols-3 gap-3 items-end">
             <div>
               <label class="text-xs text-slate-500">Student UID</label>
-              <input type="text" id="manualUid" required class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm" placeholder="Firebase uid" />
+              <input type="text" id="manualUid" required class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" placeholder="Firebase uid" />
             </div>
             <div>
               <label class="text-xs text-slate-500">Course</label>
-              <select id="manualCourse" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm">
+              <select id="manualCourse" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition">
                 <option value="beginner">Beginner</option>
                 <option value="intermediate">Intermediate</option>
                 <option value="advanced">Advanced</option>
                 <option value="kids-teens">Kids &amp; Teens</option>
               </select>
             </div>
-            <button type="submit" class="bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">Grant 30-day access</button>
+            <button type="submit" class="bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">Grant 30-day access</button>
           </form>
         </div>
       </section>
@@ -133,8 +172,8 @@
           <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
             <h2 class="font-bold text-brand-900 dark:text-brand-100">Students</h2>
             <div class="flex gap-2">
-              <input type="search" id="studentSearch" placeholder="Search name or email…" class="text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-1.5 w-56" />
-              <button type="button" id="exportStudents" class="text-sm text-brand-700 underline">Export CSV</button>
+              <input type="search" id="studentSearch" placeholder="Search name or email…" class="text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-1.5 w-56 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" />
+              <button type="button" id="exportStudents" class="text-sm text-brand-700 dark:text-brand-300 underline">Export CSV</button>
             </div>
           </div>
           <div class="overflow-x-auto">
@@ -170,19 +209,19 @@
           <h2 class="font-bold text-brand-900 dark:text-brand-100 mb-4" id="qFormTitle">Add placement question</h2>
           <form id="qForm" class="space-y-3 max-w-xl">
             <input type="hidden" id="qEditId" value="" />
-            <input type="text" id="qText" required placeholder="Question text" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm" />
-            <input type="text" id="qOpt0" required placeholder="Option A" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm" />
-            <input type="text" id="qOpt1" required placeholder="Option B" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm" />
-            <input type="text" id="qOpt2" required placeholder="Option C" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm" />
-            <input type="text" id="qOpt3" required placeholder="Option D" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm" />
+            <input type="text" id="qText" required placeholder="Question text" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" />
+            <input type="text" id="qOpt0" required placeholder="Option A" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" />
+            <input type="text" id="qOpt1" required placeholder="Option B" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" />
+            <input type="text" id="qOpt2" required placeholder="Option C" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" />
+            <input type="text" id="qOpt3" required placeholder="Option D" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" />
             <div class="flex flex-wrap gap-3">
-              <select id="qCorrect" class="border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm">
+              <select id="qCorrect" class="border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition">
                 <option value="0">Correct: A</option>
                 <option value="1">Correct: B</option>
                 <option value="2">Correct: C</option>
                 <option value="3">Correct: D</option>
               </select>
-              <select id="qLevel" class="border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm">
+              <select id="qLevel" class="border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition">
                 <option value="1">Level 1</option>
                 <option value="2">Level 2</option>
                 <option value="3">Level 3</option>
@@ -192,8 +231,8 @@
               </label>
             </div>
             <div class="flex gap-2">
-              <button type="submit" class="bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">Save question</button>
-              <button type="button" id="qCancelEdit" class="hidden text-sm px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600">Cancel edit</button>
+              <button type="submit" class="bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">Save question</button>
+              <button type="button" id="qCancelEdit" class="hidden text-sm px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Cancel edit</button>
             </div>
           </form>
         </div>
@@ -211,27 +250,27 @@
           <p class="text-xs text-slate-500 mb-4">Upload image or video via Cloudinary (fill keys in Settings), or paste an external URL.</p>
           <form id="lessonForm" class="space-y-3 max-w-xl">
             <input type="hidden" id="lEditId" value="" />
-            <input type="text" id="lTitle" required placeholder="Lesson title" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm" />
-            <select id="lCourse" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm">
+            <input type="text" id="lTitle" required placeholder="Lesson title" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" />
+            <select id="lCourse" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition">
               <option value="beginner">Beginner</option>
               <option value="intermediate">Intermediate</option>
               <option value="advanced">Advanced</option>
               <option value="kids-teens">Kids &amp; Teens</option>
             </select>
-            <select id="lType" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm">
+            <select id="lType" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition">
               <option value="document">Document / link</option>
               <option value="image">Image</option>
               <option value="video">Video</option>
             </select>
             <div class="flex flex-wrap gap-2 items-center">
-              <input type="url" id="lUrl" placeholder="Media or material URL" class="flex-1 min-w-[200px] border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm" />
-              <button type="button" id="btnCloudinary" class="text-sm bg-sky-600 hover:bg-sky-700 text-white font-semibold px-4 py-2 rounded-lg">Upload to Cloudinary</button>
+              <input type="url" id="lUrl" placeholder="Media or material URL" class="flex-1 min-w-[200px] border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" />
+              <button type="button" id="btnCloudinary" class="text-sm bg-sky-600 hover:bg-sky-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors">Upload to Cloudinary</button>
             </div>
             <div id="lPreview" class="hidden text-sm"></div>
-            <input type="number" id="lOrder" value="1" min="0" class="w-24 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm" />
+            <input type="number" id="lOrder" value="1" min="0" class="w-24 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" />
             <div class="flex gap-2">
-              <button type="submit" class="bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">Save lesson</button>
-              <button type="button" id="lCancelEdit" class="hidden text-sm px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600">Cancel edit</button>
+              <button type="submit" class="bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">Save lesson</button>
+              <button type="button" id="lCancelEdit" class="hidden text-sm px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Cancel edit</button>
             </div>
           </form>
         </div>
@@ -254,34 +293,24 @@
       <!-- SETTINGS -->
       <section id="tab-settings" class="tab-panel hidden">
         <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 space-y-4 max-w-2xl">
-          <h2 class="font-bold text-brand-900 dark:text-brand-100">Integration keys (fill these in every page’s PBT_CONFIG)</h2>
-          <p class="text-sm text-slate-500">These values are stored in frontend config for Paystack popup and Cloudinary uploads. Never put secret keys (Paystack secret, Cloudinary API secret) in the browser — use Pipedream / Cloud Functions for those.</p>
+          <h2 class="font-bold text-brand-900 dark:text-brand-100">Integration keys (fill these in every page's PBT_CONFIG)</h2>
+          <p class="text-sm text-slate-500">These values are stored in frontend config for Paystack popup and Cloudinary uploads.</p>
           <div class="text-sm space-y-2 font-mono bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 overflow-x-auto">
-            <p>paystackPublicKey: "<span class="text-amber-600">pk_live_YOUR_KEY_HERE</span>"</p>
+            <p>paystackPublicKey: "<span class="text-amber-600">pk_live_...</span>"</p>
             <p>cloudinary: {</p>
-            <p class="pl-4">cloudName: "<span class="text-amber-600">YOUR_CLOUD_NAME</span>",</p>
-            <p class="pl-4">uploadPreset: "<span class="text-amber-600">YOUR_UNSIGNED_PRESET</span>"</p>
+            <p class="pl-4">cloudName: "<span class="text-amber-600">your_cloud_name</span>",</p>
+            <p class="pl-4">uploadPreset: "<span class="text-amber-600">your_preset</span>"</p>
             <p>}</p>
-            <p>pipedreamWebhookUrl: "<span class="text-amber-600">https://eo....m.pipedream.net</span>" <span class="text-slate-400">(optional client notify)</span></p>
+            <p>pipedreamWebhookUrl: "<span class="text-amber-600">https://...</span>" <span class="text-slate-400">(optional client notify)</span></p>
           </div>
           <div class="bg-brand-50 dark:bg-brand-950 border border-brand-100 dark:border-brand-800 rounded-xl p-4 text-sm text-brand-900 dark:text-brand-100">
             <strong>Admin emails (must match firestore.rules):</strong>
             <ul class="mt-2 list-disc list-inside font-mono text-xs">
-              <li>......</li>
               <li>capntanphilemon123@gmail.com</li>
               <li>ngwanwophebe7@gmail.com</li>
-              <li>admin4@example.com ← replace</li>
+              <li>admin4@example.com ← optional 4th</li>
             </ul>
-            <p class="mt-2 text-xs">Email must be verified. Google sign-in recommended.</p>
-          </div>
-          <div class="text-sm text-slate-600 dark:text-slate-300 space-y-1">
-            <p><strong>Pipedream flow (recommended):</strong></p>
-            <ol class="list-decimal list-inside text-xs space-y-1">
-              <li>Paystack webhook → Pipedream</li>
-              <li>Verify signature with Paystack secret</li>
-              <li>Write/update <code>payments/{ref}</code> and create <code>enrollments/{uid}_{courseId}</code> with Firebase Admin SDK</li>
-              <li>Or leave status <code>pending</code> and approve in this panel</li>
-            </ol>
+            <p class="mt-2 text-xs">Update adminEmails in PBT_CONFIG on every page, and mirror the same list in firestore.rules.</p>
           </div>
         </div>
       </section>
@@ -306,7 +335,7 @@
         "admin4@example.com"
       ],
       /* ========== FILL THESE ========== */
-      paystackPublicKey: "pk_live_YOUR_KEY_HERE",
+      paystackPublicKey: "pk_live_1360dbbf248bd92c3afcb1b2b9a132f13f941d83",
       cloudinary: {
         cloudName: "YOUR_CLOUD_NAME",
         uploadPreset: "YOUR_UNSIGNED_PRESET"
@@ -325,12 +354,19 @@
 
     function toast(msg, type) {
       var host = document.getElementById("toastHost");
+      var icon = type === "error" ? "⚠️" : "✅";
       var el = document.createElement("div");
-      el.className = "toast px-4 py-3 rounded-xl text-sm shadow-lg border " +
-        (type === "error" ? "bg-red-50 text-red-800 border-red-200" : "bg-green-50 text-green-800 border-green-200");
-      el.textContent = msg;
+      el.className = "animate-slidein px-4 py-3 rounded-xl text-sm shadow-lg border flex items-center gap-2 " +
+        (type === "error"
+          ? "bg-red-50 text-red-800 border-red-200 dark:bg-red-950 dark:text-red-200 dark:border-red-800"
+          : "bg-green-50 text-green-800 border-green-200 dark:bg-green-950 dark:text-green-200 dark:border-green-800");
+      el.innerHTML = '<span>' + icon + '</span><span>' + msg + '</span>';
       host.appendChild(el);
-      setTimeout(function () { el.remove(); }, 4000);
+      setTimeout(function () {
+        el.style.transition = "opacity .3s ease";
+        el.style.opacity = 0;
+        setTimeout(function () { el.remove(); }, 300);
+      }, 4000);
     }
 
     function isConfigured() {
@@ -348,18 +384,51 @@
       return c ? c.title : id;
     }
 
+    function formatNaira(n) {
+      return n != null ? "₦" + n.toLocaleString("en-NG") : "";
+    }
+
+    function animateCount(el, target, duration) {
+      duration = duration || 600;
+      var start = null;
+      function step(ts) {
+        if (!start) start = ts;
+        var progress = Math.min((ts - start) / duration, 1);
+        el.textContent = Math.floor(progress * target);
+        if (progress < 1) requestAnimationFrame(step);
+        else el.textContent = target;
+      }
+      requestAnimationFrame(step);
+    }
+
+    function setTheme(dark) {
+      document.documentElement.classList.toggle("dark", dark);
+      document.getElementById("themeIconSun").classList.toggle("hidden", dark);
+      document.getElementById("themeIconMoon").classList.toggle("hidden", !dark);
+      try { localStorage.setItem("pbt_theme", dark ? "dark" : "light"); } catch (e) {}
+    }
+
     function switchTab(name) {
       document.querySelectorAll(".tab-panel").forEach(function (p) { p.classList.add("hidden"); });
       document.querySelectorAll(".admin-tab").forEach(function (b) {
-        b.classList.remove("border-brand-600", "text-brand-700", "dark:text-brand-300", "font-semibold");
-        b.classList.add("border-transparent", "text-slate-500", "font-medium");
+        b.classList.remove("active", "text-brand-700", "dark:text-brand-300", "font-semibold");
+        b.classList.add("text-slate-500", "font-medium");
       });
       var panel = document.getElementById("tab-" + name);
-      if (panel) panel.classList.remove("hidden");
+      if (panel) {
+        panel.classList.remove("hidden");
+        panel.style.opacity = 0;
+        panel.style.transform = "translateY(6px)";
+        requestAnimationFrame(function () {
+          panel.style.transition = "opacity .25s ease, transform .25s ease";
+          panel.style.opacity = 1;
+          panel.style.transform = "translateY(0)";
+        });
+      }
       document.querySelectorAll(".admin-tab").forEach(function (b) {
         if (b.getAttribute("data-tab") === name) {
-          b.classList.add("border-brand-600", "text-brand-700", "dark:text-brand-300", "font-semibold");
-          b.classList.remove("border-transparent", "text-slate-500", "font-medium");
+          b.classList.add("active", "text-brand-700", "dark:text-brand-300", "font-semibold");
+          b.classList.remove("text-slate-500", "font-medium");
         }
       });
     }
@@ -432,14 +501,14 @@
           var statusColor = d.status === "pending" ? "bg-amber-100 text-amber-900" :
             d.status === "approved" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
           var actions = d.status === "pending"
-            ? '<button type="button" data-approve="' + item.id + '" class="text-xs bg-green-600 text-white px-3 py-1 rounded-lg mr-1">Approve</button>' +
-              '<button type="button" data-reject="' + item.id + '" class="text-xs bg-red-600 text-white px-3 py-1 rounded-lg">Reject</button>'
+            ? '<button type="button" data-approve="' + item.id + '" class="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg mr-1 transition-colors">Approve</button>' +
+              '<button type="button" data-reject="' + item.id + '" class="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg transition-colors">Reject</button>'
             : "";
-          return '<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3" data-pay-row="' + item.id + '">' +
+          return '<div class="animate-popcard bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3" data-pay-row="' + item.id + '">' +
             '<div class="text-sm">' +
             '<span class="inline-block text-xs font-semibold px-2 py-0.5 rounded ' + statusColor + '">' + (d.status || "") + '</span> ' +
             '<span class="font-medium">' + courseTitle(d.courseId) + '</span>' +
-            '<p class="text-xs text-slate-500 mt-1">UID: ' + (d.uid || "—") + ' · ' + (d.amount != null ? d.amount.toLocaleString("fr-FR") + " XAF" : "") +
+            '<p class="text-xs text-slate-500 mt-1">UID: ' + (d.uid || "—") + ' · ' + formatNaira(d.amount) +
             (d.paystackRef ? " · Ref: " + d.paystackRef : "") + '</p>' +
             '<p class="text-xs text-slate-400">' + when + (d.email ? " · " + d.email : "") + '</p></div>' +
             '<div>' + actions + '</div></div>';
@@ -486,7 +555,7 @@
       }
       noS.classList.add("hidden");
       tbody.innerHTML = filtered.map(function (u) {
-        return '<tr class="border-b border-slate-100 dark:border-slate-700">' +
+        return '<tr class="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">' +
           '<td class="py-2.5 pr-4 font-medium">' + u.name + '</td>' +
           '<td class="py-2.5 pr-4">' + (u.email || "—") + '</td>' +
           '<td class="py-2.5 pr-4 font-mono text-xs">' + (u.uid || "").slice(0, 12) + '…</td>' +
@@ -498,7 +567,7 @@
     function loadStudents() {
       db.collection("users").orderBy("createdAt", "desc").limit(300).get()
         .then(function (snap) {
-          document.getElementById("statUsers").textContent = snap.size;
+          animateCount(document.getElementById("statUsers"), snap.size);
           allStudents = snap.docs.map(function (d) {
             var u = d.data();
             return {
@@ -520,7 +589,7 @@
     function loadEnrolments() {
       db.collection("enrollments").orderBy("approvedAt", "desc").limit(100).get()
         .then(function (snap) {
-          document.getElementById("statEnrol").textContent = snap.size;
+          animateCount(document.getElementById("statEnrol"), snap.size);
           var list = document.getElementById("enrolList");
           var no = document.getElementById("noEnrol");
           if (snap.empty) {
@@ -575,15 +644,15 @@
             var opts = (q.options || []).map(function (o, i) {
               return (i === q.correct ? "✓ " : "") + o;
             }).join(" · ");
-            return '<div class="border border-slate-200 dark:border-slate-700 rounded-xl p-4">' +
+            return '<div class="border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-brand-300 dark:hover:border-brand-700 transition-colors">' +
               '<div class="flex flex-wrap justify-between gap-2">' +
               '<p class="font-medium text-sm text-brand-900 dark:text-brand-100">' + (q.text || q.q || "") + '</p>' +
               '<span class="text-xs text-slate-400">L' + (q.level || 1) + (q.active === false ? " · inactive" : "") + '</span></div>' +
               '<p class="text-xs text-slate-500 mt-1">' + opts + '</p>' +
               '<div class="mt-2 flex gap-2">' +
-              '<button type="button" data-q-edit="' + doc.id + '" class="text-xs text-brand-700 underline">Edit</button>' +
+              '<button type="button" data-q-edit="' + doc.id + '" class="text-xs text-brand-700 dark:text-brand-300 underline">Edit</button>' +
               '<button type="button" data-q-del="' + doc.id + '" class="text-xs text-red-600 underline">Delete</button>' +
-              '<button type="button" data-q-toggle="' + doc.id + '" class="text-xs text-slate-600 underline">' + (q.active === false ? "Activate" : "Deactivate") + '</button>' +
+              '<button type="button" data-q-toggle="' + doc.id + '" class="text-xs text-slate-600 dark:text-slate-300 underline">' + (q.active === false ? "Activate" : "Deactivate") + '</button>' +
               '</div></div>';
           }).join("");
 
@@ -652,15 +721,15 @@
             } else if (l.type === "video" && l.url) {
               media = '<video src="' + l.url + '" controls class="mt-2 max-h-32 rounded-lg w-full max-w-md"></video>';
             } else if (l.url) {
-              media = '<a href="' + l.url + '" target="_blank" rel="noopener" class="text-xs text-brand-700 underline block mt-1">Open link</a>';
+              media = '<a href="' + l.url + '" target="_blank" rel="noopener" class="text-xs text-brand-700 dark:text-brand-300 underline block mt-1">Open link</a>';
             }
-            return '<div class="border border-slate-200 dark:border-slate-700 rounded-xl p-4">' +
+            return '<div class="border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-brand-300 dark:hover:border-brand-700 transition-colors">' +
               '<div class="flex flex-wrap justify-between gap-2">' +
               '<p class="font-medium text-sm">' + (l.title || "") + '</p>' +
               '<span class="text-xs text-slate-400">' + courseTitle(l.courseId) + ' · ' + (l.type || "document") + '</span></div>' +
               media +
               '<div class="mt-2 flex gap-2">' +
-              '<button type="button" data-l-edit="' + doc.id + '" class="text-xs text-brand-700 underline">Edit</button>' +
+              '<button type="button" data-l-edit="' + doc.id + '" class="text-xs text-brand-700 dark:text-brand-300 underline">Edit</button>' +
               '<button type="button" data-l-del="' + doc.id + '" class="text-xs text-red-600 underline">Delete</button>' +
               '</div></div>';
           }).join("");
@@ -699,13 +768,13 @@
       prev.classList.remove("hidden");
       if (type === "image") prev.innerHTML = '<img src="' + url + '" class="max-h-32 rounded-lg" alt="preview" />';
       else if (type === "video") prev.innerHTML = '<video src="' + url + '" controls class="max-h-40 rounded-lg w-full max-w-md"></video>';
-      else prev.innerHTML = '<a href="' + url + '" target="_blank" class="text-brand-700 underline text-xs">' + url + '</a>';
+      else prev.innerHTML = '<a href="' + url + '" target="_blank" class="text-brand-700 dark:text-brand-300 underline text-xs">' + url + '</a>';
     }
 
     function loadPlacements() {
       db.collection("placementResults").orderBy("createdAt", "desc").limit(40).get()
         .then(function (snap) {
-          document.getElementById("statPlace").textContent = snap.size;
+          animateCount(document.getElementById("statPlace"), snap.size);
           var pl = document.getElementById("placeList");
           var noP = document.getElementById("noPlace");
           if (snap.empty) {
@@ -728,18 +797,18 @@
 
     function refreshStats() {
       db.collection("payments").where("status", "==", "pending").get()
-        .then(function (snap) { document.getElementById("statPending").textContent = snap.size; })
+        .then(function (snap) { animateCount(document.getElementById("statPending"), snap.size); })
         .catch(function () { document.getElementById("statPending").textContent = "—"; });
     }
 
     document.addEventListener("DOMContentLoaded", function () {
-      try {
-        if (localStorage.getItem("pbt_theme") === "dark") document.documentElement.classList.add("dark");
-      } catch (e) {}
+      var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      var savedTheme = null;
+      try { savedTheme = localStorage.getItem("pbt_theme"); } catch (e) {}
+      setTheme(savedTheme ? savedTheme === "dark" : prefersDark);
+
       document.getElementById("themeToggle").addEventListener("click", function () {
-        var dark = !document.documentElement.classList.contains("dark");
-        document.documentElement.classList.toggle("dark", dark);
-        try { localStorage.setItem("pbt_theme", dark ? "dark" : "light"); } catch (e) {}
+        setTheme(!document.documentElement.classList.contains("dark"));
       });
 
       if (!isConfigured()) {
@@ -763,9 +832,9 @@
         btn.addEventListener("click", function () {
           payFilter = btn.getAttribute("data-pay-filter");
           document.querySelectorAll(".pay-filter").forEach(function (b) {
-            b.className = "pay-filter px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600";
+            b.className = "pay-filter px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors";
           });
-          btn.className = "pay-filter px-3 py-1 rounded-lg bg-amber-100 text-amber-900 font-medium";
+          btn.className = "pay-filter px-3 py-1 rounded-lg bg-amber-100 text-amber-900 font-medium transition-colors";
           loadPayments();
         });
       });

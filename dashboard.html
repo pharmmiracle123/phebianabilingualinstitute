@@ -173,9 +173,45 @@
       </section>
 
       <section id="tab-enrol" class="tab-panel hidden">
-        <p class="text-slate-600 dark:text-slate-300 text-sm mb-4">Select a course. After payment is verified by the server, your enrolment appears under My courses. (Wire Paystack / Flutterwave webhook to write to <code class="text-xs bg-slate-100 dark:bg-slate-700 px-1 rounded">enrollments</code>.)</p>
+        <p class="text-slate-600 dark:text-slate-300 text-sm mb-4">Select a track (English, French, or Bilingual Bundle). Pay by <strong>bank / Mobile Money transfer</strong> (recommended for Cameroon &amp; multi-country) or <strong>Paystack</strong> where supported (Nigeria setup). After you pay by transfer, send “I HAVE SENT THE MONEY — KINDLY APPROVE” so admin can unlock materials.</p>
         <div id="enrolGrid" class="grid sm:grid-cols-2 gap-4"></div>
       </section>
+
+      <!-- Payment method modal -->
+      <div id="payModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50" style="display:none">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6">
+          <div class="flex items-start justify-between gap-3 mb-4">
+            <div>
+              <h3 class="font-bold text-lg text-brand-900 dark:text-brand-100">Pay for <span id="payCourseTitle">Course</span></h3>
+              <p class="text-sm text-slate-500"><span id="payCoursePrice"></span></p>
+            </div>
+            <button type="button" id="payModalClose" class="text-slate-400 hover:text-slate-700 text-xl leading-none">&times;</button>
+          </div>
+
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">I am paying from</label>
+          <select id="payCountry" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-xl px-3 py-2 text-sm mb-4">
+            <option value="CM">Cameroon (XAF · bank / Mobile Money)</option>
+            <option value="NG">Nigeria (NGN · bank transfer or Paystack)</option>
+            <option value="INT">Other country (USD bank transfer)</option>
+          </select>
+
+          <div id="bankDetailsBox" class="bg-brand-50 dark:bg-brand-950 border border-brand-100 dark:border-brand-800 rounded-xl p-4 text-sm mb-4">
+            <p class="font-semibold text-brand-900 dark:text-brand-100 mb-2">Transfer to this account</p>
+            <div id="bankDetailsText" class="text-slate-700 dark:text-slate-300 space-y-1 text-sm font-mono"></div>
+            <p class="text-xs text-slate-500 mt-3">Use your full name as the transfer reference when possible. Amount must match the course price.</p>
+          </div>
+
+          <div class="space-y-3">
+            <button type="button" id="btnNotifyPaid" class="w-full bg-accent hover:bg-accent-dark text-brand-950 font-bold py-3 rounded-xl transition">
+              I HAVE SENT THE MONEY — KINDLY APPROVE
+            </button>
+            <button type="button" id="btnPaystack" class="w-full border-2 border-brand-700 text-brand-800 dark:text-brand-200 hover:bg-brand-50 dark:hover:bg-brand-900 font-semibold py-3 rounded-xl transition hidden">
+              Pay with Paystack (card / bank — Nigeria)
+            </button>
+            <p id="payModalHint" class="text-xs text-slate-500 text-center">After bank transfer, click the green button. Admin will see your name, email and UID and approve once the money arrives.</p>
+          </div>
+        </div>
+      </div>
 
       <section id="tab-materials" class="tab-panel hidden">
         <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
@@ -238,20 +274,48 @@
       ],
       /* ========== FILL THESE ========== */
       paystackPublicKey: "pk_live_1360dbbf248bd92c3afcb1b2b9a132f13f941d83",
-  paystackSubaccount: "YOUR_SUBACCOUNT_CODE", // e.g. "ACCT_xxxxxxxxxxxx" — fill in later
-  cloudinary: {
-    cloudName: "YOUR_CLOUD_NAME",
-    uploadPreset: "YOUR_UNSIGNED_PRESET"
-  },
+      paystackSubaccount: "YOUR_SUBACCOUNT_CODE",
+      cloudinary: {
+        cloudName: "YOUR_CLOUD_NAME",
+        uploadPreset: "YOUR_UNSIGNED_PRESET"
+      },
       pipedreamWebhookUrl: "",
       enrolmentDays: 30,
-      /* NOTE: prices below are in NAIRA (NGN) now — review these figures, they
-         were previously labelled as XAF and are not a 1:1 currency swap. */
+      /* Bank / MoMo accounts — replace placeholders with real numbers */
+      bankAccounts: {
+        CM: {
+          label: "Cameroon (XAF)",
+          bankName: "YOUR_CAMEROON_BANK",
+          accountName: "Ngwanwo Phebe / PHEBIANA BILINGUAL ACADEMY",
+          accountNumber: "REPLACE_CM_ACCOUNT_NUMBER",
+          extra: "MTN MoMo / Orange Money: REPLACE_MOMO_NUMBER (name must match)"
+        },
+        NG: {
+          label: "Nigeria (NGN) — Sir Philemon",
+          bankName: "YOUR_NIGERIA_BANK",
+          accountName: "Capntan Philemon M.",
+          accountNumber: "REPLACE_NG_ACCOUNT_NUMBER",
+          extra: "For Nigerian clients. You may also use Paystack below."
+        },
+        INT: {
+          label: "International (USD)",
+          bankName: "YOUR_USD_BANK",
+          accountName: "PHEBIANA BILINGUAL ACADEMY",
+          accountNumber: "REPLACE_USD_ACCOUNT_NUMBER",
+          extra: "SWIFT/IBAN: REPLACE_SWIFT_OR_IBAN · Use for clients outside CM/NG"
+        }
+      },
+      /* Prices in XAF (Central African CFA) — Cameroon focus. Bundle is discounted vs buying both tracks. */
       courses: [
-        { id: "beginner", title: "Beginner", price: 15000, features: ["6 modules", "2 live classes/week"] },
-        { id: "intermediate", title: "Intermediate", price: 20000, features: ["6 modules", "2 live classes/week"] },
-        { id: "advanced", title: "Advanced", price: 25000, features: ["6 modules", "2 live classes/week"] },
-        { id: "kids-teens", title: "Kids & Teens", price: 30000, features: ["8 lessons", "2 live classes/week"] }
+        { id: "en-beginner", title: "English · Beginner", price: 15000, features: ["6 modules", "2 live English classes/week"] },
+        { id: "en-intermediate", title: "English · Intermediate", price: 20000, features: ["6 modules", "2 live English classes/week"] },
+        { id: "en-advanced", title: "English · Advanced", price: 25000, features: ["6 modules", "2 live English classes/week"] },
+        { id: "fr-beginner", title: "French · Beginner", price: 15000, features: ["6 modules", "2 live French classes/week"] },
+        { id: "fr-intermediate", title: "French · Intermediate", price: 20000, features: ["6 modules", "2 live French classes/week"] },
+        { id: "fr-advanced", title: "French · Advanced", price: 25000, features: ["6 modules", "2 live French classes/week"] },
+        { id: "en-kids", title: "English · Kids & Teens", price: 30000, features: ["8 lessons", "2 live classes/week"] },
+        { id: "fr-kids", title: "French · Kids & Teens", price: 30000, features: ["8 lessons", "2 live classes/week"] },
+        { id: "bilingual-bundle", title: "Bilingual Bundle (EN + FR)", price: 32000, features: ["Both tracks", "Discount vs separate", "Combined certificate"] }
       ]
     };
 
@@ -270,7 +334,7 @@
     }
 
     function formatPrice(n) {
-      return "₦" + n.toLocaleString("en-NG");
+      return n.toLocaleString("fr-FR") + " XAF";
     }
 
     function toast(msg, type) {
@@ -501,6 +565,183 @@
 
             var enrolledIds = list.map(function (e) { return e.courseId; });
             var grid = document.getElementById("enrolGrid");
+            var pendingCourseId = null;
+            var pendingCourse = null;
+            var userProfile = { firstName: "", lastName: "", fullName: "" };
+
+            // Load display name from users doc for payment messages
+            db.collection("users").doc(user.uid).get().then(function (snap) {
+              if (snap.exists) {
+                var u = snap.data() || {};
+                userProfile.firstName = u.firstName || "";
+                userProfile.lastName = u.lastName || "";
+                userProfile.fullName = ((u.firstName || "") + " " + (u.lastName || "")).trim() || user.displayName || user.email || "";
+              } else {
+                userProfile.fullName = user.displayName || user.email || "";
+              }
+            }).catch(function () {
+              userProfile.fullName = user.displayName || user.email || "";
+            });
+
+            function showBankDetails() {
+              var code = document.getElementById("payCountry").value;
+              var acc = (PBT_CONFIG.bankAccounts || {})[code];
+              var el = document.getElementById("bankDetailsText");
+              var paystackBtn = document.getElementById("btnPaystack");
+              if (!acc) {
+                el.innerHTML = "<p>Account details not configured.</p>";
+                return;
+              }
+              el.innerHTML =
+                "<p><span class='text-slate-500'>Country:</span> " + (acc.label || code) + "</p>" +
+                "<p><span class='text-slate-500'>Bank:</span> " + (acc.bankName || "—") + "</p>" +
+                "<p><span class='text-slate-500'>Account name:</span> " + (acc.accountName || "—") + "</p>" +
+                "<p><span class='text-slate-500'>Account number:</span> <strong class='text-brand-800 dark:text-brand-200 text-base'>" + (acc.accountNumber || "—") + "</strong></p>" +
+                (acc.extra ? "<p class='mt-2 text-xs text-slate-600 dark:text-slate-400'>" + acc.extra + "</p>" : "");
+              // Paystack only for Nigeria (Nigerian Paystack setup)
+              if (paystackBtn) {
+                if (code === "NG") paystackBtn.classList.remove("hidden");
+                else paystackBtn.classList.add("hidden");
+              }
+            }
+
+            function openPayModal(course) {
+              pendingCourse = course;
+              pendingCourseId = course.id;
+              document.getElementById("payCourseTitle").textContent = course.title;
+              document.getElementById("payCoursePrice").textContent = formatPrice(course.price) + " (or equivalent in local currency for NG/USD accounts)";
+              document.getElementById("payCountry").value = "CM";
+              showBankDetails();
+              var modal = document.getElementById("payModal");
+              modal.style.display = "flex";
+              modal.classList.remove("hidden");
+            }
+
+            function closePayModal() {
+              var modal = document.getElementById("payModal");
+              modal.style.display = "none";
+              modal.classList.add("hidden");
+              pendingCourse = null;
+              pendingCourseId = null;
+            }
+
+            document.getElementById("payModalClose").onclick = closePayModal;
+            document.getElementById("payModal").addEventListener("click", function (e) {
+              if (e.target === document.getElementById("payModal")) closePayModal();
+            });
+            document.getElementById("payCountry").onchange = showBankDetails;
+
+            document.getElementById("btnNotifyPaid").onclick = function () {
+              if (!pendingCourse || !user) return;
+              var btn = document.getElementById("btnNotifyPaid");
+              btn.disabled = true;
+              var country = document.getElementById("payCountry").value;
+              var acc = (PBT_CONFIG.bankAccounts || {})[country] || {};
+              var fullName = userProfile.fullName || user.displayName || user.email || "";
+              db.collection("payments").add({
+                uid: user.uid,
+                email: user.email || "",
+                fullName: fullName,
+                firstName: userProfile.firstName || "",
+                lastName: userProfile.lastName || "",
+                courseId: pendingCourse.id,
+                amount: pendingCourse.price,
+                currency: country === "NG" ? "NGN" : (country === "INT" ? "USD" : "XAF"),
+                country: country,
+                method: "bank_transfer",
+                status: "pending",
+                message: "I HAVE SENT THE MONEY KINDLY APPROVE",
+                accountUsed: {
+                  label: acc.label || country,
+                  bankName: acc.bankName || "",
+                  accountName: acc.accountName || "",
+                  accountNumber: acc.accountNumber || ""
+                },
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+              }).then(function () {
+                toast("Request sent. Admin will approve after confirming the transfer.", "success");
+                closePayModal();
+                // mark course button if still visible
+                var courseBtn = grid.querySelector('[data-course="' + pendingCourseId + '"]');
+                if (courseBtn) {
+                  courseBtn.textContent = "Pending approval";
+                  courseBtn.disabled = true;
+                  courseBtn.className = "w-full py-2 rounded-lg text-sm font-semibold bg-amber-100 text-amber-900 cursor-not-allowed";
+                }
+              }).catch(function (err) {
+                toast(err.message || "Could not send payment notice", "error");
+                btn.disabled = false;
+              });
+            };
+
+            document.getElementById("btnPaystack").onclick = function () {
+              if (!pendingCourse || !user) return;
+              var pk = PBT_CONFIG.paystackPublicKey || "";
+              if (!pk || pk.indexOf("YOUR_KEY") >= 0 || pk.indexOf("pk_live_YOUR") === 0) {
+                toast("Paystack public key not configured on this page.", "error");
+                return;
+              }
+              if (typeof PaystackPop === "undefined") {
+                toast("Paystack script failed to load. Check your network.", "error");
+                return;
+              }
+              var course = pendingCourse;
+              var cid = course.id;
+              var handler = PaystackPop.setup({
+                key: pk,
+                email: user.email,
+                amount: course.price * 100,
+                currency: "NGN",
+                ref: "PBT_" + user.uid.slice(0, 8) + "_" + cid + "_" + Date.now(),
+                metadata: {
+                  uid: user.uid,
+                  courseId: cid,
+                  custom_fields: [
+                    { display_name: "Course", variable_name: "courseId", value: cid },
+                    { display_name: "UID", variable_name: "uid", value: user.uid }
+                  ]
+                },
+                callback: function (response) {
+                  var fullName = userProfile.fullName || user.displayName || user.email || "";
+                  db.collection("payments").add({
+                    uid: user.uid,
+                    email: user.email || "",
+                    fullName: fullName,
+                    courseId: cid,
+                    amount: course.price,
+                    currency: "NGN",
+                    country: "NG",
+                    method: "paystack",
+                    status: "pending",
+                    paystackRef: response.reference,
+                    message: "Paystack payment completed — kindly approve",
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                  }).then(function () {
+                    toast("Payment received. Awaiting admin approval.", "success");
+                    launchConfetti();
+                    closePayModal();
+                    if (PBT_CONFIG.pipedreamWebhookUrl) {
+                      fetch(PBT_CONFIG.pipedreamWebhookUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          event: "paystack_success",
+                          reference: response.reference,
+                          uid: user.uid,
+                          courseId: cid,
+                          amount: course.price
+                        })
+                      }).catch(function () {});
+                    }
+                  }).catch(function (err) {
+                    toast(err.message || "Could not record payment", "error");
+                  });
+                },
+                onClose: function () {}
+              });
+              handler.openIframe();
+            };
+
             grid.innerHTML = PBT_CONFIG.courses.map(function (c) {
               var already = enrolledIds.indexOf(c.id) >= 0;
               return '<article class="course-card bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5">' +
@@ -512,7 +753,7 @@
                 '<button type="button" data-course="' + c.id + '" ' + (already ? "disabled" : "") +
                 ' class="w-full py-2 rounded-lg text-sm font-semibold transition-colors ' +
                 (already ? "bg-slate-100 text-slate-400 cursor-not-allowed dark:bg-slate-700" : "bg-accent text-brand-950 hover:bg-accent-dark") + '">' +
-                (already ? "Already enrolled" : "Request enrolment") + "</button></article>";
+                (already ? "Already enrolled" : "Pay & enrol") + "</button></article>";
             }).join("");
 
             grid.querySelectorAll("[data-course]").forEach(function (btn) {
@@ -521,67 +762,7 @@
                 var cid = btn.getAttribute("data-course");
                 var course = PBT_CONFIG.courses.find(function (c) { return c.id === cid; });
                 if (!course) return;
-                var pk = PBT_CONFIG.paystackPublicKey || "";
-                if (!pk || pk.indexOf("YOUR_KEY") >= 0 || pk.indexOf("pk_live_YOUR") === 0) {
-                  toast("Add your Paystack public key in PBT_CONFIG.paystackPublicKey on this page.", "error");
-                  return;
-                }
-                if (typeof PaystackPop === "undefined") {
-                  toast("Paystack script failed to load. Check your network.", "error");
-                  return;
-                }
-                btn.disabled = true;
-                var handler = PaystackPop.setup({
-                  key: pk,
-                  email: user.email,
-                  amount: course.price * 100,
-                  currency: "NGN",
-                  ref: "PBT_" + user.uid.slice(0, 8) + "_" + cid + "_" + Date.now(),
-                  metadata: {
-                    uid: user.uid,
-                    courseId: cid,
-                    custom_fields: [
-                      { display_name: "Course", variable_name: "courseId", value: cid },
-                      { display_name: "UID", variable_name: "uid", value: user.uid }
-                    ]
-                  },
-                  callback: function (response) {
-                    db.collection("payments").add({
-                      uid: user.uid,
-                      email: user.email || "",
-                      courseId: cid,
-                      amount: course.price,
-                      currency: "NGN",
-                      status: "pending",
-                      paystackRef: response.reference,
-                      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    }).then(function () {
-                      toast("Payment received. Awaiting admin approval.", "success");
-                      launchConfetti();
-                      if (PBT_CONFIG.pipedreamWebhookUrl) {
-                        fetch(PBT_CONFIG.pipedreamWebhookUrl, {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            event: "paystack_success",
-                            reference: response.reference,
-                            uid: user.uid,
-                            courseId: cid,
-                            amount: course.price
-                          })
-                        }).catch(function () {});
-                      }
-                      btn.textContent = "Pending approval";
-                    }).catch(function (err) {
-                      toast(err.message || "Could not record payment", "error");
-                      btn.disabled = false;
-                    });
-                  },
-                  onClose: function () {
-                    btn.disabled = false;
-                  }
-                });
-                handler.openIframe();
+                openPayModal(course);
               });
             });
 

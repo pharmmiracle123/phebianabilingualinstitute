@@ -83,6 +83,7 @@
   </header>
 
   <main class="max-w-6xl mx-auto px-4 py-8">
+    <!-- Gate (shown until admin is verified) -->
     <div id="gate" class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 text-center max-w-md mx-auto">
       <h1 class="text-xl font-bold text-brand-900 dark:text-brand-100 mb-2">Checking admin access…</h1>
       <p class="text-sm text-slate-500">You must sign in with a verified admin email.</p>
@@ -90,7 +91,9 @@
       <a href="login.html" class="inline-block mt-4 text-brand-700 dark:text-brand-300 font-semibold underline">Go to login</a>
     </div>
 
+    <!-- Main panel (shown only to verified admins) -->
     <div id="panel" class="hidden space-y-6">
+      <!-- Welcome banner -->
       <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-800 via-brand-700 to-brand-900 text-white p-6 sm:p-7 shadow-xl">
         <div class="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-accent/20 blur-2xl"></div>
         <div class="absolute -left-6 -bottom-10 w-32 h-32 rounded-full bg-brand-300/10 blur-2xl"></div>
@@ -102,6 +105,7 @@
         </div>
       </div>
 
+      <!-- Quick stats -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div class="stat-card bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
           <p class="text-xs text-slate-500 uppercase">Users</p>
@@ -121,6 +125,7 @@
         </div>
       </div>
 
+      <!-- Tabs -->
       <div class="flex gap-1 overflow-x-auto border-b border-slate-200 dark:border-slate-700 pb-px">
         <button type="button" data-tab="payments" class="admin-tab active shrink-0 px-4 py-2 text-sm font-semibold text-brand-700 dark:text-brand-300">Payments</button>
         <button type="button" data-tab="students" class="admin-tab shrink-0 px-4 py-2 text-sm font-medium text-slate-500 hover:text-brand-700 dark:hover:text-brand-300">Students</button>
@@ -131,7 +136,7 @@
         <button type="button" data-tab="settings" class="admin-tab shrink-0 px-4 py-2 text-sm font-medium text-slate-500 hover:text-brand-700 dark:hover:text-brand-300">Settings</button>
       </div>
 
-      <!-- PAYMENTS -->
+      <!-- ===================== PAYMENTS ===================== -->
       <section id="tab-payments" class="tab-panel space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h2 class="font-bold text-brand-900 dark:text-brand-100">Payment approvals</h2>
@@ -141,24 +146,34 @@
             <button type="button" data-pay-filter="all" class="pay-filter px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors">All</button>
           </div>
         </div>
-        <p class="text-xs text-slate-500">Pending items include <strong>bank / Mobile Money transfers</strong> (student clicked “I HAVE SENT THE MONEY — KINDLY APPROVE”) and <strong>Paystack</strong> payments. Confirm the money arrived, then Approve to unlock a 30-day enrolment. Each request auto-captures UID, full name and email.</p>
+        <p class="text-xs text-slate-500">
+          Pending items include <strong>bank / Mobile Money transfers</strong> (student clicked “I HAVE SENT THE MONEY — KINDLY APPROVE”) and <strong>Paystack</strong> payments.
+          Confirm the money arrived, then click <strong>Approve</strong> to unlock a 30-day enrolment. Each request already stores the student’s UID, full name and email.
+        </p>
         <div id="paymentsList" class="space-y-2"></div>
         <p id="noPayments" class="text-slate-400 text-sm hidden">No payments in this filter.</p>
 
+        <!-- Manual enrolment (no payment needed) -->
         <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 mt-6">
-          <h3 class="font-semibold text-brand-900 dark:text-brand-100 mb-3">Manual enrolment (no payment record)</h3>
+          <h3 class="font-semibold text-brand-900 dark:text-brand-100 mb-1">Manual enrolment</h3>
+          <p class="text-xs text-slate-500 mb-3">Use this when a student paid outside the system (e.g. cash or bank transfer already confirmed). Enter their Firebase UID and choose the course.</p>
           <form id="manualEnrolForm" class="grid sm:grid-cols-3 gap-3 items-end">
             <div>
-              <label class="text-xs text-slate-500">Student UID</label>
-              <input type="text" id="manualUid" required class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" placeholder="Firebase uid" />
+              <label class="text-xs text-slate-500">Student UID (from Students tab)</label>
+              <input type="text" id="manualUid" required class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" placeholder="Firebase UID" />
             </div>
             <div>
               <label class="text-xs text-slate-500">Course</label>
               <select id="manualCourse" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition">
-                <option value="beginner">Beginner</option>
-                <option value="intermediate">Intermediate</option>
-                <option value="advanced">Advanced</option>
-                <option value="kids-teens">Kids &amp; Teens</option>
+                <option value="en-beginner">English · Beginner</option>
+                <option value="en-intermediate">English · Intermediate</option>
+                <option value="en-advanced">English · Advanced</option>
+                <option value="fr-beginner">French · Beginner</option>
+                <option value="fr-intermediate">French · Intermediate</option>
+                <option value="fr-advanced">French · Advanced</option>
+                <option value="en-kids">English · Kids &amp; Teens</option>
+                <option value="fr-kids">French · Kids &amp; Teens</option>
+                <option value="bilingual-bundle">Bilingual Bundle (EN + FR)</option>
               </select>
             </div>
             <button type="submit" class="bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">Grant 30-day access</button>
@@ -166,13 +181,16 @@
         </div>
       </section>
 
-      <!-- STUDENTS -->
+      <!-- ===================== STUDENTS ===================== -->
       <section id="tab-students" class="tab-panel hidden">
         <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
           <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <h2 class="font-bold text-brand-900 dark:text-brand-100">Students</h2>
+            <div>
+              <h2 class="font-bold text-brand-900 dark:text-brand-100">Students</h2>
+              <p class="text-xs text-slate-500 mt-0.5">All registered users. Copy the full UID if you need it for manual enrolment.</p>
+            </div>
             <div class="flex gap-2">
-              <input type="search" id="studentSearch" placeholder="Search name or email…" class="text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-1.5 w-56 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" />
+              <input type="search" id="studentSearch" placeholder="Search name, email or UID…" class="text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-1.5 w-56 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" />
               <button type="button" id="exportStudents" class="text-sm text-brand-700 dark:text-brand-300 underline">Export CSV</button>
             </div>
           </div>
@@ -180,9 +198,9 @@
             <table class="w-full text-sm text-left">
               <thead class="text-xs text-slate-500 border-b dark:border-slate-600">
                 <tr>
-                  <th class="py-2 pr-4">Name</th>
+                  <th class="py-2 pr-4">Full name</th>
                   <th class="py-2 pr-4">Email</th>
-                  <th class="py-2 pr-4">UID</th>
+                  <th class="py-2 pr-4">Student UID</th>
                   <th class="py-2 pr-4">Joined</th>
                   <th class="py-2">Interest</th>
                 </tr>
@@ -194,19 +212,21 @@
         </div>
       </section>
 
-      <!-- ENROLMENTS -->
+      <!-- ===================== ENROLMENTS ===================== -->
       <section id="tab-enrolments" class="tab-panel hidden">
         <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-          <h2 class="font-bold text-brand-900 dark:text-brand-100 mb-4">Active &amp; recent enrolments</h2>
+          <h2 class="font-bold text-brand-900 dark:text-brand-100 mb-1">Active &amp; recent enrolments</h2>
+          <p class="text-xs text-slate-500 mb-4">Shows who has access and when it expires. You can revoke access if needed.</p>
           <div id="enrolList" class="space-y-2 text-sm"></div>
           <p id="noEnrol" class="text-slate-400 text-sm hidden">No enrolments yet.</p>
         </div>
       </section>
 
-      <!-- QUESTIONS -->
+      <!-- ===================== PLACEMENT QUESTIONS ===================== -->
       <section id="tab-questions" class="tab-panel hidden space-y-6">
         <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-          <h2 class="font-bold text-brand-900 dark:text-brand-100 mb-4" id="qFormTitle">Add placement question</h2>
+          <h2 class="font-bold text-brand-900 dark:text-brand-100 mb-1" id="qFormTitle">Add placement question</h2>
+          <p class="text-xs text-slate-500 mb-4">These questions appear on the placement test for enrolled students. Set language, skill category, CEFR level and difficulty. Mark the correct option.</p>
           <form id="qForm" class="space-y-3 max-w-xl">
             <input type="hidden" id="qEditId" value="" />
             <input type="text" id="qText" required placeholder="Question text" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" />
@@ -221,10 +241,29 @@
                 <option value="2">Correct: C</option>
                 <option value="3">Correct: D</option>
               </select>
-              <select id="qLevel" class="border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition">
-                <option value="1">Level 1</option>
-                <option value="2">Level 2</option>
-                <option value="3">Level 3</option>
+              <select id="qLanguage" class="border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" title="Language">
+                <option value="en">English</option>
+                <option value="fr">French</option>
+              </select>
+              <select id="qSkill" class="border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" title="Skill category">
+                <option value="grammar">Grammar</option>
+                <option value="vocabulary">Vocabulary</option>
+                <option value="reading">Reading</option>
+                <option value="listening">Listening</option>
+                <option value="writing">Writing</option>
+                <option value="mixed">Mixed</option>
+              </select>
+              <select id="qCefr" class="border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" title="CEFR level">
+                <option value="A1">A1 · Beginner</option>
+                <option value="A2">A2 · Elementary</option>
+                <option value="B1">B1 · Intermediate</option>
+                <option value="B2">B2 · Upper-Intermediate</option>
+                <option value="C1">C1 · Advanced</option>
+              </select>
+              <select id="qLevel" class="border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" title="Numeric difficulty 1–3">
+                <option value="1">Difficulty 1</option>
+                <option value="2">Difficulty 2</option>
+                <option value="3">Difficulty 3</option>
               </select>
               <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                 <input type="checkbox" id="qActive" checked class="accent-brand-600" /> Active
@@ -243,19 +282,27 @@
         </div>
       </section>
 
-      <!-- LESSONS & MEDIA -->
+      <!-- ===================== LESSONS & MEDIA ===================== -->
       <section id="tab-lessons" class="tab-panel hidden space-y-6">
         <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-          <h2 class="font-bold text-brand-900 dark:text-brand-100 mb-2">Add lesson / media</h2>
-          <p class="text-xs text-slate-500 mb-4">Upload image or video via Cloudinary (fill keys in Settings), or paste an external URL.</p>
+          <h2 class="font-bold text-brand-900 dark:text-brand-100 mb-1">Add lesson / media</h2>
+          <p class="text-xs text-slate-500 mb-4">
+            Upload an image, video or document via Cloudinary (file upload is supported), or paste an external URL.
+            Cloudinary is already configured — just click the upload button.
+          </p>
           <form id="lessonForm" class="space-y-3 max-w-xl">
             <input type="hidden" id="lEditId" value="" />
             <input type="text" id="lTitle" required placeholder="Lesson title" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" />
             <select id="lCourse" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition">
-              <option value="beginner">Beginner</option>
-              <option value="intermediate">Intermediate</option>
-              <option value="advanced">Advanced</option>
-              <option value="kids-teens">Kids &amp; Teens</option>
+              <option value="en-beginner">English · Beginner</option>
+              <option value="en-intermediate">English · Intermediate</option>
+              <option value="en-advanced">English · Advanced</option>
+              <option value="fr-beginner">French · Beginner</option>
+              <option value="fr-intermediate">French · Intermediate</option>
+              <option value="fr-advanced">French · Advanced</option>
+              <option value="en-kids">English · Kids &amp; Teens</option>
+              <option value="fr-kids">French · Kids &amp; Teens</option>
+              <option value="bilingual-bundle">Bilingual Bundle (EN + FR)</option>
             </select>
             <select id="lType" class="w-full border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition">
               <option value="document">Document / link</option>
@@ -263,11 +310,16 @@
               <option value="video">Video</option>
             </select>
             <div class="flex flex-wrap gap-2 items-center">
-              <input type="url" id="lUrl" placeholder="Media or material URL" class="flex-1 min-w-[200px] border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" />
-              <button type="button" id="btnCloudinary" class="text-sm bg-sky-600 hover:bg-sky-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors">Upload to Cloudinary</button>
+              <input type="url" id="lUrl" placeholder="Media or material URL (or upload below)" class="flex-1 min-w-[200px] border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" />
+              <button type="button" id="btnCloudinary" class="text-sm bg-sky-600 hover:bg-sky-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors">
+                Upload file to Cloudinary
+              </button>
             </div>
             <div id="lPreview" class="hidden text-sm"></div>
-            <input type="number" id="lOrder" value="1" min="0" class="w-24 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" />
+            <div>
+              <label class="text-xs text-slate-500">Display order (lower numbers appear first)</label>
+              <input type="number" id="lOrder" value="1" min="0" class="w-24 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition" />
+            </div>
             <div class="flex gap-2">
               <button type="submit" class="bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">Save lesson</button>
               <button type="button" id="lCancelEdit" class="hidden text-sm px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Cancel edit</button>
@@ -281,36 +333,38 @@
         </div>
       </section>
 
-      <!-- PLACEMENT RESULTS -->
+      <!-- ===================== PLACEMENT RESULTS ===================== -->
       <section id="tab-placements" class="tab-panel hidden">
         <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-          <h2 class="font-bold text-brand-900 dark:text-brand-100 mb-4">Recent placement results</h2>
+          <h2 class="font-bold text-brand-900 dark:text-brand-100 mb-1">Recent placement results</h2>
+          <p class="text-xs text-slate-500 mb-4">Scores from the placement test (most recent first).</p>
           <ul id="placeList" class="space-y-2 text-sm"></ul>
           <p id="noPlace" class="text-slate-400 text-sm hidden">No results yet.</p>
         </div>
       </section>
 
-      <!-- SETTINGS -->
+      <!-- ===================== SETTINGS ===================== -->
       <section id="tab-settings" class="tab-panel hidden">
         <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 space-y-4 max-w-2xl">
-          <h2 class="font-bold text-brand-900 dark:text-brand-100">Integration keys (fill these in every page's PBT_CONFIG)</h2>
-          <p class="text-sm text-slate-500">These values are stored in frontend config for Paystack popup and Cloudinary uploads.</p>
+          <h2 class="font-bold text-brand-900 dark:text-brand-100">Integration keys</h2>
+          <p class="text-sm text-slate-500">These values are already filled in this page’s config. Keep the same values in every other page’s <code class="text-xs bg-slate-100 dark:bg-slate-900 px-1 rounded">PBT_CONFIG</code>.</p>
           <div class="text-sm space-y-2 font-mono bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 overflow-x-auto">
-            <p>paystackPublicKey: "<span class="text-amber-600">pk_live_...</span>"</p>
+            <p>paystackPublicKey: "<span class="text-amber-600">pk_live_1360dbbf248bd92c3afcb1b2b9a132f13f941d83</span>"</p>
             <p>cloudinary: {</p>
-            <p class="pl-4">cloudName: "<span class="text-amber-600">your_cloud_name</span>",</p>
-            <p class="pl-4">uploadPreset: "<span class="text-amber-600">your_preset</span>"</p>
+            <p class="pl-4">cloudName: "<span class="text-amber-600">xhkfiry2</span>",</p>
+            <p class="pl-4">uploadPreset: "<span class="text-amber-600">Project1</span>"</p>
             <p>}</p>
-            <p>pipedreamWebhookUrl: "<span class="text-amber-600">https://...</span>" <span class="text-slate-400">(optional client notify)</span></p>
+            <p>pipedreamWebhookUrl: "<span class="text-amber-600">(optional)</span>"</p>
           </div>
           <div class="bg-brand-50 dark:bg-brand-950 border border-brand-100 dark:border-brand-800 rounded-xl p-4 text-sm text-brand-900 dark:text-brand-100">
-            <strong>Admin emails (must match firestore.rules):</strong>
+            <strong>Admin emails (must also match firestore.rules):</strong>
             <ul class="mt-2 list-disc list-inside font-mono text-xs">
+              <li>onyekamiracle08@gmail.com</li>
               <li>capntanphilemon123@gmail.com</li>
               <li>ngwanwophebe7@gmail.com</li>
               <li>admin4@example.com ← optional 4th</li>
             </ul>
-            <p class="mt-2 text-xs">Update adminEmails in PBT_CONFIG on every page, and mirror the same list in firestore.rules.</p>
+            <p class="mt-2 text-xs">Update <code>adminEmails</code> in PBT_CONFIG on every page, and mirror the same list in firestore.rules.</p>
           </div>
         </div>
       </section>
@@ -334,11 +388,10 @@
         "ngwanwophebe7@gmail.com",
         "admin4@example.com"
       ],
-      /* ========== FILL THESE ========== */
       paystackPublicKey: "pk_live_1360dbbf248bd92c3afcb1b2b9a132f13f941d83",
       cloudinary: {
-        cloudName: "YOUR_CLOUD_NAME",
-        uploadPreset: "YOUR_UNSIGNED_PRESET"
+        cloudName: "xhkfiry2",
+        uploadPreset: "Project1"
       },
       pipedreamWebhookUrl: "",
       enrolmentDays: 30,
@@ -568,33 +621,58 @@
       }
       noS.classList.add("hidden");
       tbody.innerHTML = filtered.map(function (u) {
+        var uid = u.uid || "";
         return '<tr class="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">' +
-          '<td class="py-2.5 pr-4 font-medium">' + u.name + '</td>' +
-          '<td class="py-2.5 pr-4">' + (u.email || "—") + '</td>' +
-          '<td class="py-2.5 pr-4 font-mono text-xs">' + (u.uid || "").slice(0, 12) + '…</td>' +
-          '<td class="py-2.5 pr-4">' + u.joined + '</td>' +
+          '<td class="py-2.5 pr-4 font-medium">' + (u.name || "—") + '</td>' +
+          '<td class="py-2.5 pr-4 break-all">' + (u.email || "—") + '</td>' +
+          '<td class="py-2.5 pr-4 font-mono text-xs break-all">' +
+            (uid ? '<span class="select-all">' + uid + '</span> <button type="button" data-copy-uid="' + uid + '" class="text-brand-600 underline text-[10px] ml-1">Copy</button>' : "—") +
+          '</td>' +
+          '<td class="py-2.5 pr-4">' + (u.joined || "—") + '</td>' +
           '<td class="py-2.5">' + (u.interestedCourse || "—") + '</td></tr>';
       }).join("");
+      tbody.querySelectorAll("[data-copy-uid]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var id = btn.getAttribute("data-copy-uid");
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(id).then(function () { toast("UID copied", "success"); }).catch(function () {});
+          } else {
+            prompt("Copy UID:", id);
+          }
+        });
+      });
     }
 
     function loadStudents() {
+      function mapSnap(snap) {
+        animateCount(document.getElementById("statUsers"), snap.size);
+        allStudents = snap.docs.map(function (d) {
+          var u = d.data() || {};
+          var name = ((u.firstName || "") + " " + (u.lastName || "")).trim();
+          if (!name && u.displayName) name = u.displayName;
+          if (!name && u.fullName) name = u.fullName;
+          return {
+            uid: d.id,
+            name: name || "—",
+            email: u.email || "—",
+            joined: (u.createdAt && u.createdAt.toDate) ? u.createdAt.toDate().toLocaleDateString() : (u.joinedAt || "—"),
+            interestedCourse: u.interestedCourse || u.course || ""
+          };
+        });
+        // sort newest first when timestamps exist
+        allStudents.sort(function (a, b) {
+          return (b.joined || "").localeCompare(a.joined || "");
+        });
+        renderStudents(document.getElementById("studentSearch") ? document.getElementById("studentSearch").value : "");
+      }
+      // Prefer ordered query; fall back without orderBy (missing index / missing createdAt)
       db.collection("users").orderBy("createdAt", "desc").limit(300).get()
-        .then(function (snap) {
-          animateCount(document.getElementById("statUsers"), snap.size);
-          allStudents = snap.docs.map(function (d) {
-            var u = d.data();
-            return {
-              uid: d.id,
-              name: ((u.firstName || "") + " " + (u.lastName || "")).trim() || "—",
-              email: u.email || "—",
-              joined: u.createdAt && u.createdAt.toDate ? u.createdAt.toDate().toLocaleDateString() : "—",
-              interestedCourse: u.interestedCourse || ""
-            };
-          });
-          renderStudents("");
+        .then(mapSnap)
+        .catch(function () {
+          return db.collection("users").limit(300).get().then(mapSnap);
         })
         .catch(function (e) {
-          document.getElementById("noStudents").textContent = e.message;
+          document.getElementById("noStudents").textContent = (e && e.message) ? e.message : "Could not load students. Check Firestore rules and admin access.";
           document.getElementById("noStudents").classList.remove("hidden");
         });
     }
@@ -660,7 +738,7 @@
             return '<div class="border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-brand-300 dark:hover:border-brand-700 transition-colors">' +
               '<div class="flex flex-wrap justify-between gap-2">' +
               '<p class="font-medium text-sm text-brand-900 dark:text-brand-100">' + (q.text || q.q || "") + '</p>' +
-              '<span class="text-xs text-slate-400">L' + (q.level || 1) + (q.active === false ? " · inactive" : "") + '</span></div>' +
+              '<span class="text-xs text-slate-400">' + (q.language ? q.language.toUpperCase() + ' · ' : '') + (q.cefr || ('L' + (q.level || 1))) + (q.skill ? ' · ' + q.skill : '') + (q.active === false ? ' · inactive' : '') + '</span></div>' +
               '<p class="text-xs text-slate-500 mt-1">' + opts + '</p>' +
               '<div class="mt-2 flex gap-2">' +
               '<button type="button" data-q-edit="' + doc.id + '" class="text-xs text-brand-700 dark:text-brand-300 underline">Edit</button>' +
@@ -684,6 +762,9 @@
               });
               document.getElementById("qCorrect").value = String(q.correct != null ? q.correct : 0);
               document.getElementById("qLevel").value = String(q.level || 1);
+              if (document.getElementById("qLanguage")) document.getElementById("qLanguage").value = q.language || "en";
+              if (document.getElementById("qSkill")) document.getElementById("qSkill").value = q.skill || "grammar";
+              if (document.getElementById("qCefr")) document.getElementById("qCefr").value = q.cefr || "A1";
               document.getElementById("qActive").checked = q.active !== false;
               document.getElementById("qFormTitle").textContent = "Edit placement question";
               document.getElementById("qCancelEdit").classList.remove("hidden");
@@ -715,6 +796,7 @@
 
     function loadLessons() {
       db.collection("lessons").orderBy("order", "asc").limit(100).get()
+        .catch(function () { return db.collection("lessons").limit(100).get(); })
         .then(function (snap) {
           var list = document.getElementById("lessonsList");
           var no = document.getElementById("noLessons");
@@ -753,7 +835,7 @@
               var l = docsMap[id];
               document.getElementById("lEditId").value = id;
               document.getElementById("lTitle").value = l.title || "";
-              document.getElementById("lCourse").value = l.courseId || "beginner";
+              document.getElementById("lCourse").value = l.courseId || "en-beginner";
               document.getElementById("lType").value = l.type || "document";
               document.getElementById("lUrl").value = l.url || "";
               document.getElementById("lOrder").value = l.order != null ? l.order : 1;
@@ -903,6 +985,9 @@
           ],
           correct: parseInt(document.getElementById("qCorrect").value, 10),
           level: parseInt(document.getElementById("qLevel").value, 10),
+          language: document.getElementById("qLanguage").value,
+          skill: document.getElementById("qSkill").value,
+          cefr: document.getElementById("qCefr").value,
           active: document.getElementById("qActive").checked,
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
@@ -1029,5 +1114,14 @@
       });
     });
   </script>
+
+  <footer class="mt-auto border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-6">
+    <div class="max-w-6xl mx-auto px-4 text-center text-xs text-slate-500 dark:text-slate-400 space-y-1">
+      <p>© <span class="pba-year"></span> PHEBIANA BILINGUAL ACADEMY (PBA). All rights reserved.</p>
+      <p>Website developed by <a href="mailto:onyekamiracle08@gmail.com" class="text-brand-700 dark:text-brand-300 font-semibold hover:underline">Onyeka Miracle</a></p>
+    </div>
+  </footer>
+  <script>document.querySelectorAll(".pba-year").forEach(function(el){ el.textContent = new Date().getFullYear(); });</script>
+
 </body>
 </html>

@@ -147,7 +147,7 @@
         <div class="bg-brand-50 dark:bg-brand-950 border border-brand-100 dark:border-brand-800 rounded-xl p-5">
           <h3 class="font-semibold text-brand-900 dark:text-brand-100 mb-2">Quick actions</h3>
           <div class="flex flex-wrap gap-2">
-            <a href="placement.html" class="text-sm bg-white dark:bg-slate-800 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-200 px-4 py-2 rounded-lg hover:bg-brand-100 dark:hover:bg-slate-700 transition-colors">Placement test</a>
+            <a href="placement.html" class="text-sm bg-white dark:bg-slate-800 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-200 px-4 py-2 rounded-lg hover:bg-brand-100 dark:hover:bg-slate-700 transition-colors" title="Available after enrolment is approved">Placement test</a>
             <button type="button" data-tab-link="enrol" class="text-sm bg-accent text-brand-950 font-semibold px-4 py-2 rounded-lg hover:bg-accent-dark transition-colors">Enrol in a course</button>
             <button type="button" data-tab-link="profile" class="text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 px-4 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Edit profile</button>
           </div>
@@ -208,7 +208,7 @@
             <button type="button" id="btnPaystack" class="w-full border-2 border-brand-700 text-brand-800 dark:text-brand-200 hover:bg-brand-50 dark:hover:bg-brand-900 font-semibold py-3 rounded-xl transition hidden">
               Pay with Paystack (card / bank — Nigeria)
             </button>
-            <p id="payModalHint" class="text-xs text-slate-500 text-center">After bank transfer, click the green button. Admin will see your name, email and UID and approve once the money arrives.</p>
+            <p id="payModalHint" class="text-xs text-slate-500 text-center">After bank transfer, click the Yellow button. Admin will see your name, email and UID and approve once the money arrives.</p>
           </div>
         </div>
       </div>
@@ -285,10 +285,10 @@
       bankAccounts: {
         CM: {
           label: "Cameroon (XAF)",
-          bankName: "YOUR_CAMEROON_BANK",
-          accountName: "Ngwanwo Phebe / PHEBIANA BILINGUAL ACADEMY",
-          accountNumber: "REPLACE_CM_ACCOUNT_NUMBER",
-          extra: "MTN MoMo / Orange Money: REPLACE_MOMO_NUMBER (name must match)"
+          bankName: "Orange Money",
+          accountName: "Ngwanwo Phebe",
+          accountNumber: "696480580",
+          extra: "Ensure you make your payment carefully"
         },
         NG: {
           label: "Nigeria (NGN) — Sir Philemon",
@@ -533,11 +533,16 @@
 
         db.collection("enrollments")
           .where("uid", "==", user.uid)
-          .where("status", "==", "active")
           .get()
           .then(function (snap) {
             var list = [];
-            snap.forEach(function (doc) { list.push(Object.assign({ id: doc.id }, doc.data())); });
+            var now = new Date();
+            snap.forEach(function (doc) {
+              var data = Object.assign({ id: doc.id }, doc.data());
+              if (data.status && data.status !== "active") return;
+              if (data.expiresAt && data.expiresAt.toDate && data.expiresAt.toDate() < now) return;
+              list.push(data);
+            });
             animateCount(document.getElementById("statCourses"), list.length);
 
             var myList = document.getElementById("myCoursesList");
@@ -768,30 +773,41 @@
 
             var mat = document.getElementById("materialsList");
             if (!enrolledIds.length) {
-              mat.innerHTML = '<p class="text-slate-400">Enrol in a course to unlock materials.</p>';
+              mat.innerHTML = '<p class="text-slate-400">Enrol in a course to unlock materials. After payment is approved, lessons assigned to your course appear here.</p>';
             } else {
               var promises = enrolledIds.map(function (cid) {
-                return db.collection("lessons").where("courseId", "==", cid).limit(20).get()
+                return db.collection("lessons").where("courseId", "==", cid).limit(50).get()
                   .then(function (s) {
                     return s.docs.map(function (d) {
-                      var x = d.data();
-                      return { title: x.title || d.id, courseId: cid, url: x.url || x.link || null, order: x.order || 0 };
+                      var x = d.data() || {};
+                      return {
+                        id: d.id,
+                        title: x.title || d.id,
+                        courseId: cid,
+                        url: x.url || x.link || null,
+                        type: x.type || "document",
+                        order: typeof x.order === "number" ? x.order : 0
+                      };
                     });
-                  }).catch(function () { return []; });
+                  }).catch(function (err) {
+                    console.warn("Lessons query failed for", cid, err && err.message);
+                    return [];
+                  });
               });
               Promise.all(promises).then(function (arrays) {
                 var all = [].concat.apply([], arrays);
                 all.sort(function (a, b) { return a.order - b.order; });
                 if (!all.length) {
-                  mat.innerHTML = '<p class="text-slate-400">No lesson materials published yet for your courses.</p>';
+                  mat.innerHTML = '<p class="text-slate-400">No lesson materials published yet for your courses. Ask your tutor/admin to upload lessons for: ' + enrolledIds.join(", ") + '</p>';
                 } else {
                   mat.innerHTML = all.map(function (l) {
                     var course = PBT_CONFIG.courses.find(function (c) { return c.id === l.courseId; });
                     var label = (course ? course.title + " · " : "") + l.title;
+                    var typeBadge = l.type ? '<span class="text-[10px] uppercase tracking-wide text-slate-400 ml-2">' + l.type + '</span>' : '';
                     if (l.url) {
-                      return '<a href="' + l.url + '" target="_blank" rel="noopener" class="block p-3 rounded-lg border border-slate-200 dark:border-slate-600 hover:border-brand-400 transition-colors">' + label + ' →</a>';
+                      return '<a href="' + l.url + '" target="_blank" rel="noopener" class="block p-3 rounded-lg border border-slate-200 dark:border-slate-600 hover:border-brand-400 transition-colors">' + label + typeBadge + ' →</a>';
                     }
-                    return '<div class="p-3 rounded-lg border border-slate-200 dark:border-slate-600">' + label + '</div>';
+                    return '<div class="p-3 rounded-lg border border-slate-200 dark:border-slate-600">' + label + typeBadge + '</div>';
                   }).join("");
                 }
               });
@@ -809,5 +825,14 @@
       });
     });
   </script>
+
+  <footer class="mt-auto border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-6">
+    <div class="max-w-6xl mx-auto px-4 text-center text-xs text-slate-500 dark:text-slate-400 space-y-1">
+      <p>© <span class="pba-year"></span> PHEBIANA BILINGUAL ACADEMY (PBA). All rights reserved.</p>
+      <p>Website developed by <a href="mailto:onyekamiracle08@gmail.com" class="text-brand-700 dark:text-brand-300 font-semibold hover:underline">Onyeka Miracle</a></p>
+    </div>
+  </footer>
+  <script>document.querySelectorAll(".pba-year").forEach(function(el){ el.textContent = new Date().getFullYear(); });</script>
+
 </body>
 </html>

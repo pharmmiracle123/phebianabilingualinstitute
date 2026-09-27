@@ -42,16 +42,22 @@
   <main class="max-w-2xl mx-auto px-4 py-8">
     <section id="intro" class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 text-center">
       <h1 class="text-2xl font-bold text-brand-900 dark:text-brand-100 mb-2">Free Placement Test</h1>
-      <p class="text-slate-600 dark:text-slate-300 text-sm mb-4">Answer 8 questions to discover your recommended level. Takes about 5 minutes.</p>
+      <p class="text-slate-600 dark:text-slate-300 text-sm mb-4">Choose a language. Separate tests give a more accurate level for English or French. Takes about 5 minutes each.</p>
       <ul class="text-left text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-sm mx-auto space-y-1">
-        <li>• Mix of English &amp; French questions</li>
+        <li>• Separate English or French test (recommended)</li>
         <li>• Optional 8-minute timer</li>
         <li>• Results saved if you are signed in</li>
+        <li>• Bundle students should take both tests</li>
       </ul>
+      <div class="flex flex-wrap justify-center gap-3 mb-6">
+        <button type="button" data-lang="en" class="lang-pick bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-2.5 rounded-xl transition">English test</button>
+        <button type="button" data-lang="fr" class="lang-pick bg-slate-700 hover:bg-slate-800 text-white font-semibold px-5 py-2.5 rounded-xl transition">French test</button>
+      </div>
+      <p id="selectedLangLabel" class="text-sm text-brand-700 dark:text-brand-300 font-medium mb-3 hidden"></p>
       <label class="flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-300 mb-4">
         <input type="checkbox" id="useTimer" class="accent-brand-600" checked /> Enable 8-minute timer
       </label>
-      <button type="button" id="startBtn" class="bg-accent hover:bg-accent-dark text-brand-950 font-bold px-8 py-3 rounded-xl transition">Start test</button>
+      <button type="button" id="startBtn" class="bg-accent hover:bg-accent-dark text-brand-950 font-bold px-8 py-3 rounded-xl transition disabled:opacity-40" disabled>Start test</button>
     </section>
 
     <section id="quiz" class="hidden">
@@ -113,18 +119,29 @@
       ]
     };
 
-    const FALLBACK_QUESTIONS = [
-      { q: "How do you say “Hello” in French?", options: ["Bonjour", "Au revoir", "Merci", "S’il vous plaît"], correct: 0, level: 1 },
+    const FALLBACK_EN = [
       { q: "Which sentence is correct?", options: ["I am go to school.", "I go to school every day.", "I goes to school.", "I going school."], correct: 1, level: 1 },
-      { q: "What does “Comment ça va ?” mean?", options: ["What is your name?", "How are you?", "Where are you from?", "Good night"], correct: 1, level: 1 },
-      { q: "Choose the correct past tense: “Yesterday I ____ to the market.”", options: ["go", "goed", "went", "going"], correct: 2, level: 2 },
-      { q: "Which is the correct French for “I would like a coffee”?", options: ["Je veux un café", "Je voudrais un café", "J’ai un café", "Je suis un café"], correct: 1, level: 2 },
+      { q: "Choose the correct past tense: “Yesterday I ____ to the market.”", options: ["go", "goed", "went", "going"], correct: 2, level: 1 },
       { q: "Identify the error: “She don’t like coffee.”", options: ["She → Her", "don’t → doesn’t", "like → likes", "No error"], correct: 1, level: 2 },
-      { q: "Choose the most natural reply to “How long have you been studying French?”", options: ["I study since two years.", "I have been studying for two years.", "I am studying two years.", "I studied two years."], correct: 1, level: 3 },
-      { q: "Which French sentence uses the subjunctive correctly?", options: ["Il faut que tu viens.", "Il faut que tu viennes.", "Il faut que tu venir.", "Il faut que tu viendra."], correct: 1, level: 3 }
+      { q: "Choose the most natural reply to “How long have you been studying English?”", options: ["I study since two years.", "I have been studying for two years.", "I am studying two years.", "I studied two years."], correct: 1, level: 2 },
+      { q: "Which word best completes: “If I ____ more time, I would travel.”", options: ["have", "had", "would have", "has"], correct: 1, level: 3 },
+      { q: "Choose the correct form: “Neither of the students ____ ready.”", options: ["are", "is", "were", "be"], correct: 1, level: 3 },
+      { q: "What does “to put off” mean?", options: ["to cancel", "to postpone", "to start", "to finish"], correct: 1, level: 2 },
+      { q: "Which is more formal?", options: ["Can you help me?", "Could you please assist me?", "Help me!", "Wanna help?"], correct: 1, level: 3 }
+    ];
+    const FALLBACK_FR = [
+      { q: "Comment dit-on « Hello » en français ?", options: ["Bonjour", "Au revoir", "Merci", "S’il vous plaît"], correct: 0, level: 1 },
+      { q: "Que signifie « Comment ça va ? » ?", options: ["Quel est votre nom ?", "Comment allez-vous ?", "D’où venez-vous ?", "Bonne nuit"], correct: 1, level: 1 },
+      { q: "Quelle est la forme correcte : « Je ____ un café. » (souhait poli)", options: ["veux", "voudrais", "ai", "suis"], correct: 1, level: 2 },
+      { q: "Choisissez le passé composé correct : « Hier, elle ____ au marché. »", options: ["va", "est allée", "allait", "ira"], correct: 1, level: 2 },
+      { q: "Quelle phrase utilise le subjonctif correctement ?", options: ["Il faut que tu viens.", "Il faut que tu viennes.", "Il faut que tu venir.", "Il faut que tu viendra."], correct: 1, level: 3 },
+      { q: "Quel mot complète : « Si j’____ plus de temps, je voyagerais. »", options: ["ai", "avais", "aurais", "a"], correct: 1, level: 3 },
+      { q: "Que signifie « remettre à plus tard » ?", options: ["annuler", "reporter", "commencer", "terminer"], correct: 1, level: 2 },
+      { q: "Quelle formule est la plus polie ?", options: ["Aide-moi !", "Pourriez-vous m’aider, s’il vous plaît ?", "Tu peux m’aider ?", "Aide !"], correct: 1, level: 3 }
     ];
 
-    var QUESTIONS = FALLBACK_QUESTIONS.slice();
+    var QUESTIONS = FALLBACK_EN.slice();
+    var testLang = "en";
     var order = [];
     var answers = [];
     var current = 0;
@@ -222,7 +239,8 @@
 
       var elapsed = startedAt ? Math.round((Date.now() - startedAt) / 1000) : null;
 
-      document.getElementById("resultLevel").textContent = level;
+      var langLabel = testLang === "fr" ? "French" : "English";
+      document.getElementById("resultLevel").textContent = langLabel + " · " + level;
       document.getElementById("resultScore").textContent = score + " / " + QUESTIONS.length + " correct (" + pct + "%)";
       document.getElementById("resultTime").textContent = elapsed != null ? "Time taken: " + formatTime(elapsed) : "";
       document.getElementById("resultMsg").textContent = msg;
@@ -230,8 +248,9 @@
         document.getElementById("scoreBar").style.width = pct + "%";
       }, 100);
 
-      var courseMap = { "Advanced": "advanced", "Intermediate": "intermediate", "Beginner+": "beginner", "Beginner": "beginner" };
-      document.getElementById("enrolLink").href = "register.html?course=" + (courseMap[level] || "beginner");
+      var levelKey = { "Advanced": "advanced", "Intermediate": "intermediate", "Beginner+": "beginner", "Beginner": "beginner" }[level] || "beginner";
+      var courseId = (testLang === "fr" ? "fr-" : "en-") + levelKey;
+      document.getElementById("enrolLink").href = "register.html?course=" + courseId;
 
       if (isConfigured()) {
         try {
@@ -242,6 +261,7 @@
             score: score,
             pct: pct,
             level: level,
+            language: testLang,
             uid: uid,
             durationSec: elapsed,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -250,7 +270,7 @@
       }
 
       try {
-        localStorage.setItem("pbt_last_placement", JSON.stringify({ level: level, score: score, pct: pct, at: Date.now() }));
+        localStorage.setItem("pbt_last_placement", JSON.stringify({ level: level, language: testLang, score: score, pct: pct, at: Date.now() }));
       } catch (e) {}
 
       document.getElementById("quiz").classList.add("hidden");
@@ -273,7 +293,23 @@
         } catch (e) {}
       }
 
+      document.querySelectorAll(".lang-pick").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          testLang = btn.getAttribute("data-lang");
+          QUESTIONS = (testLang === "fr" ? FALLBACK_FR : FALLBACK_EN).slice();
+          var label = document.getElementById("selectedLangLabel");
+          label.textContent = "Selected: " + (testLang === "fr" ? "French placement test" : "English placement test");
+          label.classList.remove("hidden");
+          document.getElementById("startBtn").disabled = false;
+          document.querySelectorAll(".lang-pick").forEach(function (b) {
+            b.classList.toggle("ring-2", b === btn);
+            b.classList.toggle("ring-accent", b === btn);
+          });
+        });
+      });
+
       document.getElementById("startBtn").addEventListener("click", function () {
+        if (!testLang) return;
         timerEnabled = document.getElementById("useTimer").checked;
         function begin() {
           order = shuffle(QUESTIONS.map(function (_, i) { return i; }));
@@ -292,15 +328,19 @@
             firebase.firestore().collection("placementQuestions").where("active", "==", true).limit(20).get()
               .then(function (snap) {
                 if (!snap.empty) {
-                  QUESTIONS = snap.docs.map(function (d) {
+                  var mapped = snap.docs.map(function (d) {
                     var x = d.data();
                     return {
                       q: x.text || x.q,
                       options: x.options || [],
                       correct: typeof x.correct === "number" ? x.correct : x.correctIndex,
-                      level: x.level || 1
+                      level: x.level || 1,
+                      language: x.language || x.lang || null
                     };
                   });
+                  var filtered = mapped.filter(function (q) { return !q.language || q.language === testLang; });
+                  if (filtered.length >= 4) QUESTIONS = filtered;
+                  // else keep language-specific FALLBACK already set
                 }
                 begin();
               })

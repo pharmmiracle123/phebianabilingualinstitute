@@ -141,7 +141,7 @@
             <button type="button" data-pay-filter="all" class="pay-filter px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors">All</button>
           </div>
         </div>
-        <p class="text-xs text-slate-500">After Paystack (or Pipedream webhook) records a payment as <code class="bg-slate-100 dark:bg-slate-700 px-1 rounded">pending</code>, approve here to create a 30-day enrolment. Pipedream can also approve via Admin SDK.</p>
+        <p class="text-xs text-slate-500">Pending items include <strong>bank / Mobile Money transfers</strong> (student clicked “I HAVE SENT THE MONEY — KINDLY APPROVE”) and <strong>Paystack</strong> payments. Confirm the money arrived, then Approve to unlock a 30-day enrolment. Each request auto-captures UID, full name and email.</p>
         <div id="paymentsList" class="space-y-2"></div>
         <p id="noPayments" class="text-slate-400 text-sm hidden">No payments in this filter.</p>
 
@@ -343,10 +343,15 @@
       pipedreamWebhookUrl: "",
       enrolmentDays: 30,
       courses: [
-        { id: "beginner", title: "Beginner", price: 15000 },
-        { id: "intermediate", title: "Intermediate", price: 20000 },
-        { id: "advanced", title: "Advanced", price: 25000 },
-        { id: "kids-teens", title: "Kids & Teens", price: 30000 }
+        { id: "en-beginner", title: "English · Beginner", price: 15000 },
+        { id: "en-intermediate", title: "English · Intermediate", price: 20000 },
+        { id: "en-advanced", title: "English · Advanced", price: 25000 },
+        { id: "fr-beginner", title: "French · Beginner", price: 15000 },
+        { id: "fr-intermediate", title: "French · Intermediate", price: 20000 },
+        { id: "fr-advanced", title: "French · Advanced", price: 25000 },
+        { id: "en-kids", title: "English · Kids & Teens", price: 30000 },
+        { id: "fr-kids", title: "French · Kids & Teens", price: 30000 },
+        { id: "bilingual-bundle", title: "Bilingual Bundle (EN + FR)", price: 32000 }
       ]
     };
 
@@ -504,14 +509,22 @@
             ? '<button type="button" data-approve="' + item.id + '" class="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg mr-1 transition-colors">Approve</button>' +
               '<button type="button" data-reject="' + item.id + '" class="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg transition-colors">Reject</button>'
             : "";
+          var methodLabel = d.method === "bank_transfer" ? "Bank / MoMo" : (d.method === "paystack" ? "Paystack" : (d.method || "Payment"));
+          var countryLabel = d.country === "CM" ? "Cameroon" : (d.country === "NG" ? "Nigeria" : (d.country === "INT" ? "International" : (d.country || "")));
+          var amtStr = (d.amount != null ? Number(d.amount).toLocaleString() : "—") + (d.currency ? " " + d.currency : "");
           return '<div class="animate-popcard bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3" data-pay-row="' + item.id + '">' +
-            '<div class="text-sm">' +
+            '<div class="text-sm min-w-0">' +
             '<span class="inline-block text-xs font-semibold px-2 py-0.5 rounded ' + statusColor + '">' + (d.status || "") + '</span> ' +
+            '<span class="inline-block text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 ml-1">' + methodLabel + '</span> ' +
+            (countryLabel ? '<span class="inline-block text-xs px-2 py-0.5 rounded bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-200 ml-1">' + countryLabel + '</span> ' : '') +
             '<span class="font-medium">' + courseTitle(d.courseId) + '</span>' +
-            '<p class="text-xs text-slate-500 mt-1">UID: ' + (d.uid || "—") + ' · ' + formatNaira(d.amount) +
+            (d.message ? '<p class="text-xs font-semibold text-amber-800 dark:text-amber-200 mt-1">“' + d.message + '”</p>' : '') +
+            '<p class="text-xs text-slate-600 dark:text-slate-300 mt-1"><strong>' + (d.fullName || "—") + '</strong> · ' + (d.email || "—") + '</p>' +
+            '<p class="text-xs text-slate-500">UID: ' + (d.uid || "—") + ' · ' + amtStr +
             (d.paystackRef ? " · Ref: " + d.paystackRef : "") + '</p>' +
-            '<p class="text-xs text-slate-400">' + when + (d.email ? " · " + d.email : "") + '</p></div>' +
-            '<div>' + actions + '</div></div>';
+            (d.accountUsed && d.accountUsed.accountNumber ? '<p class="text-xs text-slate-400">Paid to: ' + (d.accountUsed.accountName || "") + ' · ' + d.accountUsed.accountNumber + '</p>' : '') +
+            '<p class="text-xs text-slate-400">' + when + '</p></div>' +
+            '<div class="shrink-0">' + actions + '</div></div>';
         }).join("");
 
         list.querySelectorAll("[data-approve]").forEach(function (btn) {
